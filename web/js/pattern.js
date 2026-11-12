@@ -172,9 +172,6 @@ const esc = (c) => String(c).replace(/[^#0-9a-fA-F]/g, '');
 
 export function buildSVG(s) {
   const W = s.width, H = s.height;
-  const k = scaleFactor(s);
-  const cx = s.cx * W, cy = s.cy * H;
-  const { rings, coreR } = buildRings(s);
   const outerR = s.r0 + (s.rings - 1) * s.step + s.step / 2 + s.thickness / 2;
 
   let defs = '';
@@ -188,6 +185,19 @@ export function buildSVG(s) {
     paint = 'url(#kp-grad)';
   }
 
+  const { body, tf } = ringsGroup(s, paint);
+  const bg = s.bgOn ? `<rect id="background" width="${W}" height="${H}" fill="${esc(s.bgColor)}"/>` : '';
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" fill="none">` +
+    `${defs}<clipPath id="kp-clip"><rect width="${W}" height="${H}"/></clipPath>` +
+    `<g id="Kolesa pattern">${bg}<g clip-path="url(#kp-clip)"><g id="rings" transform="${tf}">${body}</g></g></g></svg>`;
+}
+
+// Rings (and core) in pattern-local units plus the transform that places them in the format.
+function ringsGroup(s, paint) {
+  const W = s.width, H = s.height;
+  const k = scaleFactor(s);
+  const cx = s.cx * W, cy = s.cy * H;
+  const { rings, coreR } = buildRings(s);
   let body = '';
   if (s.threeD) {
     // Projected rings are filled outlines: a stroke can't follow perspective foreshortening.
@@ -207,8 +217,13 @@ export function buildSVG(s) {
   // In 2D the pattern turns in its plane by rotZ (in 3D rotZ is part of the projection).
   const rot2d = !s.threeD && s.rotZ ? ` rotate(${f(s.rotZ)})` : '';
   const tf = `translate(${f(cx)} ${f(cy)}) scale(${f(k)})${rot2d}`;
-  const bg = s.bgOn ? `<rect id="background" width="${W}" height="${H}" fill="${esc(s.bgColor)}"/>` : '';
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" fill="none">` +
-    `${defs}<clipPath id="kp-clip"><rect width="${W}" height="${H}"/></clipPath>` +
-    `<g id="Kolesa pattern">${bg}<g clip-path="url(#kp-clip)"><g id="rings" transform="${tf}">${body}</g></g></g></svg>`;
+  return { body, tf };
+}
+
+// Preview-only: the same rings drawn across a larger viewport (format px; x/y may be negative),
+// in one flat colour, no background, no clipping. Shows how the pattern continues past the format.
+export function buildGhostSVG(s, x, y, w, h, color = 'currentColor') {
+  const { body, tf } = ringsGroup(s, color);
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${f(x)} ${f(y)} ${f(w)} ${f(h)}" preserveAspectRatio="none" fill="none">` +
+    `<g transform="${tf}">${body.replace(/ id="[^"]*"/g, '')}</g></svg>`;
 }

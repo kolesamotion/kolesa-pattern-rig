@@ -1,4 +1,4 @@
-import { DEFAULTS, VARIANTS, LIMITS, buildSVG, scaleFactor } from './pattern.js?v=__V__';
+import { DEFAULTS, VARIANTS, LIMITS, buildSVG, buildGhostSVG, scaleFactor } from './pattern.js?v=__V__';
 import { T, LANGS } from './i18n.js?v=__V__';
 import { ICONS } from './icons.js?v=__V__';
 
@@ -232,6 +232,7 @@ function render() {
   $('cameraSec').classList.toggle('show', s.threeD);
   $('sizeLabel').textContent = `${s.width} × ${s.height}`;
   if (fitKey !== s.width + 'x' + s.height) fitFrame();   // stage resizes are handled by the ResizeObserver
+  else renderGhost();
   clearTimeout(hashTimer);
   hashTimer = setTimeout(() => history.replaceState(null, '', '#' + toQuery(state)), 250);
 }
@@ -314,6 +315,19 @@ function fitFrame() {
   const k = fitScale();
   fr.style.width = Math.max(1, state.width * k) + 'px';
   fr.style.height = Math.max(1, state.height * k) + 'px';
+  const st = $('stage');
+  ghostGeo = { k, sw: st.clientWidth, sh: st.clientHeight };
+  renderGhost();
+}
+
+// Preview only: the pattern continued outside the format in a neutral, low-contrast colour.
+// Lies under the frame and covers the whole stage; never part of the export.
+let ghostGeo = null;
+function renderGhost() {
+  if (!ghostGeo) return;
+  const { k, sw, sh } = ghostGeo;
+  const left = (sw - state.width * k) / 2, top = (sh - state.height * k) / 2;
+  $('ghost').innerHTML = buildGhostSVG(state, -left / k, -top / k, sw / k, sh / k);
 }
 
 // Navigation. Both modes: Ctrl/Cmd+LMB (or +wheel) rotation Z. 3D: LMB orbit, MMB pan, RMB drag / wheel dolly, H = frame. 2D: LMB / MMB move the pattern.
