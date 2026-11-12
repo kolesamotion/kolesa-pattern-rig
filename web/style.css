@@ -46,8 +46,16 @@ select.kds-input option { color: #1d2129; }
 .slider .kds-input { height: var(--control-sm); padding: 0 var(--space-2); text-align: right; font-variant-numeric: tabular-nums; }
 input[type=range] { width: 100%; accent-color: var(--primary); cursor: pointer; }
 
-.check { display: flex; gap: var(--space-2); align-items: center; margin: var(--space-2) 0; cursor: pointer; }
-.check input { accent-color: var(--primary); width: 16px; height: 16px; margin: 0; }
+/* Toggle switches: label on the left, switch on the right */
+.check { display: flex; flex-direction: row-reverse; justify-content: space-between; gap: var(--space-3); align-items: center; margin: var(--space-2_5) 0; cursor: pointer; }
+.switch { appearance: none; -webkit-appearance: none; flex: none; position: relative; width: 32px; height: 18px; margin: 0; border-radius: 999px; cursor: pointer;
+  background: color-mix(in oklch, var(--input) 45%, transparent); transition: background var(--duration-fast) var(--ease-out); }
+.switch::before { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--white);
+  box-shadow: 0 1px 2px rgb(29 33 41 / 0.25); transition: transform var(--duration-fast) var(--ease-out); }
+.switch:checked { background: var(--primary); }
+.switch:checked::before { transform: translateX(14px); }
+.check:hover .switch:not(:checked) { background: color-mix(in oklch, var(--input) 65%, transparent); }
+.switch:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 30%, transparent); }
 details { margin-top: var(--space-3); }
 summary { cursor: pointer; color: var(--muted-foreground); font-weight: 500; margin-bottom: var(--space-3); }
 summary:hover { color: var(--foreground); }
