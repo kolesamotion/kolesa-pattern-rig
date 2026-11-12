@@ -72,7 +72,7 @@ select.kds-input option { color: #1d2129; }
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-top: var(--space-3); }
 
 /* Sliders */
-.slider { display: grid; grid-template-columns: 1fr 84px; gap: var(--space-1_5) var(--space-3); align-items: center; margin-bottom: var(--space-4); }
+.slider { display: grid; grid-template-columns: 1fr 96px; gap: var(--space-1_5) var(--space-3); align-items: center; margin-bottom: var(--space-4); }
 .slider .name { grid-column: 1 / -1; display: flex; justify-content: space-between; }
 .slider .unit { color: var(--muted-foreground); font-size: 12px; }
 .slider .kds-input { height: var(--control-sm); padding: 0 var(--space-2); font-variant-numeric: tabular-nums; }
@@ -221,3 +221,18 @@ body.resizing .ghost { visibility: hidden; }   /* frame is only CSS-scaled while
 .panel .colorField .alpha { all: unset; width: 3ch; font: inherit; font-size: 13px; font-variant-numeric: tabular-nums; text-align: right; color: var(--foreground); cursor: text; -moz-appearance: textfield; }
 .panel .colorField .alpha::-webkit-inner-spin-button, .panel .colorField .alpha::-webkit-outer-spin-button { -webkit-appearance: none; display: none; }
 .colorField .pct { flex: none; font-size: 13px; color: var(--muted-foreground); margin-left: -4px; }
+
+/* Section title with a "?" whose tooltip lists the shortcuts. */
+.titleTip { position: relative; display: flex; align-items: center; gap: 6px; margin-bottom: var(--space-3); }
+.titleTip .helpTip--wide { position: static; }   /* tooltip anchors to the title row, so it never runs off the panel */
+.titleTip h2 { margin: 0; }
+.titleTip .helpTip svg { width: 14px; height: 14px; }
+.helpTip--wide .tip { left: -8px; right: auto; max-width: calc(100% + 16px); top: calc(100% + 8px); bottom: auto; transform: translateY(-4px); z-index: 20; white-space: normal; width: 300px; }
+.helpTip--wide:hover .tip, .helpTip--wide:focus-visible .tip { transform: none; }
+.helpTip .tip .keys { margin: 0; color: inherit; opacity: 1; }
+.helpTip .tip .keys li { padding: 2px 0; display: grid; grid-template-columns: auto 1fr; gap: 12px; }
+.helpTip .tip .keys li > span:last-child { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 4px; }
+.helpTip .tip .keys li > span:first-child { white-space: nowrap; }
+.helpTip .tip .keys li > span:first-child { opacity: .75; }
+.helpTip .tip .keys kbd { color: inherit; background: rgb(255 255 255 / 0.15); border: 0; }
+:is([data-theme="dark"], .dark) .helpTip .tip .keys kbd { background: rgb(29 33 41 / 0.1); }

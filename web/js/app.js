@@ -249,14 +249,18 @@ function applyLang() {
   $('copyHint').innerHTML = `<kbd>${mod} + C</kbd> ${t('k_copyAny')}`;
   document.title = t('title');
   $('langs').querySelectorAll('button').forEach((b) => b.classList.toggle('is-active', b.dataset.l === lang));
-  const rows = [
-    ['k_orbit', 'ЛКМ'], ['k_roll', `${/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl'} + ЛКМ`], ['k_pan', 'СКМ'], ['k_dolly', 'ПКМ'],
-    ['k_dolly', lang === 'en' ? 'Wheel' : lang === 'kk' ? 'Дөңгелек' : 'Колесо'], ['k_frame', 'H'],
-  ];
-  const mb = lang === 'en' ? { 'ЛКМ': 'LMB', 'СКМ': 'MMB', 'ПКМ': 'RMB' } : lang === 'kk' ? { 'ЛКМ': 'СТБ', 'СКМ': 'ОТБ', 'ПКМ': 'ОңТБ' } : {};
-  const tr = (x) => x.replace(/ЛКМ|СКМ|ПКМ/g, (m) => mb[m] || m);
-  $('camKeys').innerHTML = rows.map(([k, a, b]) =>
-    `<li><span>${t(k)}</span><span><kbd>${tr(a)}</kbd>${b ? ` ${t('k_or')} <kbd>${tr(b)}</kbd>` : ''}</span></li>`).join('');
+  // Shortcut lists live in the "?" tooltips next to the Camera and Size & position titles.
+  const mb = lang === 'en' ? { 'ЛКМ': 'LMB', 'СКМ': 'MMB', 'ПКМ': 'RMB', 'Колесо': 'Wheel' } : lang === 'kk' ? { 'ЛКМ': 'СТБ', 'СКМ': 'ОТБ', 'ПКМ': 'ОңТБ', 'Колесо': 'Дөңгелек' } : {};
+  const tr = (x) => x.replace(/ЛКМ|СКМ|ПКМ|Колесо/g, (m) => mb[m] || m);
+  const keyList = (rows) => rows.map(([k, ...alts]) =>
+    `<li><span>${t(k)}</span><span>${alts.map((a) => `<kbd>${tr(a)}</kbd>`).join(` ${t('k_or')} `)}</span></li>`).join('');
+  $('camKeys').innerHTML = keyList([
+    ['k_orbit', 'ЛКМ'], ['k_pan', 'СКМ'], ['k_dolly', 'ПКМ', 'Колесо'], ['k_roll', `${mod} + ЛКМ ↔`, `${mod} + Колесо`], ['k_frame', 'H'],
+  ]);
+  $('posKeys').innerHTML = keyList([
+    ['k_move', 'ЛКМ', 'СКМ'], ['k_move3d', 'СКМ'], ['k_scale2d', 'Колесо'],
+    ['k_roll', `${mod} + ЛКМ ↔`, `${mod} + Колесо`], ['k_rings', `${mod} + ЛКМ ↕`],
+  ]);
   renderUserPresets();
 }
 
