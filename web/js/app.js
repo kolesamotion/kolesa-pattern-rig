@@ -369,16 +369,18 @@ function syncFormat() {
   const s = state, ae = document.activeElement;
   if (ae !== $('width')) $('width').value = s.width;
   if (ae !== $('height')) $('height').value = s.height;
-  const r = s.width / s.height;
+  // During the aspect-ratio animation the slider and label show the target, not the in-between sizes.
+  const [fw, fh] = sizeTarget || [s.width, s.height];
+  const r = fw / fh;
   let best = 0;
   RATIOS.forEach(([a, b], i) => { if (Math.abs(Math.log(a / b / r)) < Math.abs(Math.log(RATIOS[best][0] / RATIOS[best][1] / r))) best = i; });
   if (ae !== $('ratio')) $('ratio').value = best;
   paintRange($('ratio'));
-  const g = gcd(s.width, s.height), a = s.width / g, b = s.height / g;
+  const g = gcd(fw, fh), a = fw / g, b = fh / g;
   $('ratioText').textContent = a <= 99 && b <= 99 ? `${a}:${b}` : r >= 1 ? `${+r.toFixed(2)}:1` : `1:${+(1 / r).toFixed(2)}`;
-  const i = $('ratioIcon').firstElementChild;
-  i.style.width = (r >= 1 ? 22 : Math.max(5, 22 * r)) + 'px';
-  i.style.height = (r >= 1 ? Math.max(5, 22 / r) : 22) + 'px';
+  const i = $('ratioIcon').firstElementChild, ri = s.width / s.height;   // icon follows the live size
+  i.style.width = (ri >= 1 ? 22 : Math.max(5, 22 * ri)) + 'px';
+  i.style.height = (ri >= 1 ? Math.max(5, 22 / ri) : 22) + 'px';
 }
 function gcd(a, b) { while (b) [a, b] = [b, a % b]; return a; }
 

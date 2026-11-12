@@ -49,10 +49,10 @@ section { padding: var(--space-6) 0 0; margin-top: var(--space-6); border-top: 1
 .presetCard:focus-visible .thumb { box-shadow: 0 0 0 2px var(--sidebar), 0 0 0 4px color-mix(in oklch, var(--ring) 50%, transparent); }
 
 /* Aspect-ratio slider (Figma Temp 21:8904): label · track · proportion icon · ratio */
-.ratioRow { display: grid; grid-template-columns: auto 1fr 22px minmax(36px, auto); align-items: center; gap: var(--space-2) var(--space-3); min-height: 32px; }
+.ratioRow { display: grid; grid-template-columns: auto 1fr 22px 48px; align-items: center; gap: var(--space-2) var(--space-3); min-height: 32px; }
 .ratioRow .kds-label { white-space: nowrap; }
 .ratioIcon { display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; }
-.ratioIcon i { display: block; border: 1.5px solid var(--foreground); border-radius: 3px; box-sizing: border-box; transition: width var(--duration-fast) var(--ease-out), height var(--duration-fast) var(--ease-out); }
+.ratioIcon i { display: block; border: 1.5px solid var(--foreground); border-radius: 3px; box-sizing: border-box; }
 .ratioText { font: 400 12px/16px var(--font-mono); color: var(--muted-foreground); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 select.kds-input { appearance: none; padding-right: 32px; cursor: pointer;
   background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' fill='none' stroke='%23808a9c' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 10px center; }
