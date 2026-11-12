@@ -91,6 +91,16 @@ function swatches(parent, colors, key, cls = '') {
 function buildUI() {
   document.querySelectorAll('i[data-icon]').forEach((i) => { i.outerHTML = ICONS[i.dataset.icon] || ''; });
   $('themeBtn').addEventListener('click', toggleTheme);
+  // Ctrl/Cmd + C anywhere copies the SVG, like "Copy for Figma" — unless text is selected in a field or on the page.
+  document.addEventListener('copy', (e) => {
+    const a = document.activeElement;
+    const fieldSel = a && /INPUT|TEXTAREA/.test(a.tagName) && a.selectionStart !== a.selectionEnd && a.type !== 'number';
+    const pageSel = String(window.getSelection() || '').length > 0;
+    if (fieldSel || pageSel) return;
+    e.preventDefault();
+    e.clipboardData.setData('text/plain', buildSVG(state));
+    toast(t('copied'));
+  });
   window.addEventListener('keydown', (e) => {
     if (/INPUT|SELECT|TEXTAREA/.test(document.activeElement?.tagName || '') || e.metaKey || e.ctrlKey || e.altKey) return;
     if (e.key === 'd' || e.key === 'в' || e.code === 'KeyD') toggleTheme();
@@ -174,6 +184,8 @@ function applyLang() {
   document.querySelectorAll('[data-t]').forEach((el) => { el.textContent = t(el.dataset.t); });
   document.querySelectorAll('[data-t-aria]').forEach((el) => { el.setAttribute('aria-label', t(el.dataset.tAria)); el.title = t(el.dataset.tAria); });
   $('presetName').placeholder = t('presetName');
+  const mod = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl';
+  $('copyHint').innerHTML = `<kbd>${mod} + C</kbd> ${t('k_copyAny')}`;
   document.title = t('title');
   $('langs').querySelectorAll('button').forEach((b) => b.classList.toggle('is-active', b.dataset.l === lang));
   const rows = [

@@ -96,3 +96,5 @@ input[type=color] { width: 32px; height: 32px; border: 1px solid var(--input); b
   .panel { border-left: 0; padding: var(--space-4); }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+.copyHint { text-align: center; margin: var(--space-2) 0 0; }
+.copyHint kbd { font: 400 12px/16px var(--font-mono); color: var(--foreground); background: var(--muted); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0 5px; }
