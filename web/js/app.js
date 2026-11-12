@@ -128,10 +128,9 @@ function buildUI() {
   }
   // format: aspect-ratio slider keeps the long side; width/height fields update live both ways
   $('ratio').addEventListener('input', (e) => {
-    const [a, b] = RATIOS[+e.target.value], L = Math.max(state.width, state.height);
-    if (a >= b) { state.width = L; state.height = Math.round(L * b / a); }
-    else { state.height = L; state.width = Math.round(L * a / b); }
-    syncFormat(); update();
+    const [a, b] = RATIOS[+e.target.value];
+    const L = Math.max(sizeTarget ? sizeTarget[0] : state.width, sizeTarget ? sizeTarget[1] : state.height);
+    animateSize(a >= b ? [L, Math.round(L * b / a)] : [Math.round(L * a / b), L]);
   });
   for (const k of ['width', 'height']) {
     $(k).addEventListener('input', (e) => {
@@ -228,6 +227,26 @@ function applyLang() {
 }
 
 // ---------- render ----------
+// Aspect-ratio change is animated like Shift (ease-in-out 150 ms). Preset thumbnails are skipped
+// while it runs (they're the expensive part of a size change) and rebuilt once at the end.
+let sizeRaf = 0, sizeTarget = null;
+function animateSize([tw, th]) {
+  cancelAnimationFrame(sizeRaf);
+  const fw = state.width, fh = state.height, t0 = performance.now(), D = 150;
+  const ease = (t) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);
+  sizeTarget = [tw, th];
+  let lw = fw, lh = fh;
+  const step = (now) => {
+    if (state.width !== lw || state.height !== lh) { sizeRaf = 0; sizeTarget = null; update(); return; }   // changed elsewhere
+    const t = Math.min(1, (now - t0) / D), k = ease(t);
+    state.width = lw = Math.round(fw + (tw - fw) * k);
+    state.height = lh = Math.round(fh + (th - fh) * k);
+    if (t < 1) { sizeRaf = requestAnimationFrame(step); render(); }
+    else { sizeRaf = 0; sizeTarget = null; update(); }
+  };
+  sizeRaf = requestAnimationFrame(step);
+}
+
 let shiftRaf = 0, shiftTarget = null;
 function animateShift(to) {
   cancelAnimationFrame(shiftRaf);
@@ -327,6 +346,7 @@ function setupResizer() {
 // Preset thumbnails: brand defaults + variant, in the current format and colours. Rebuilt only when those change.
 let thumbKey = '';
 function renderThumbs() {
+  if (sizeTarget) return;   // aspect-ratio animation in progress
   const s = state, key = [s.width, s.height, s.ringColor, s.bgColor, s.bgOn, s.grad.join()].join('|');
   if (key === thumbKey) return;
   thumbKey = key;
