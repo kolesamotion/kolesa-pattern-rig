@@ -140,7 +140,7 @@ function buildUI() {
   $('copyBtn').addEventListener('click', copySVG);
   $('downloadBtn').addEventListener('click', downloadSVG);
   $('shareBtn').addEventListener('click', shareLink);
-  $('resetBtn').addEventListener('click', () => { state = structuredClone(DEFAULTS); update(); });
+  for (const id of ['resetBtn', 'resetTop']) $(id).addEventListener('click', () => { state = structuredClone(DEFAULTS); update(); toast(t('resetDone')); });
 
   setupDrag();
   new ResizeObserver(fitFrame).observe($('stage'));
@@ -253,9 +253,9 @@ function setupDrag() {
   const end = () => { start = null; fr.className = 'frame'; };
   fr.addEventListener('pointerup', end); fr.addEventListener('pointercancel', end);
   fr.addEventListener('wheel', (e) => {
-    if (!state.threeD) return;
     e.preventDefault();
-    state.camDist = state.camDist * Math.exp(e.deltaY * 0.0015);
+    if (state.threeD) state.camDist = state.camDist * Math.exp(e.deltaY * 0.0015);   // 3D: dolly
+    else state.scale = state.scale * Math.exp(-e.deltaY * 0.0015);                   // 2D: scale
     clampAll(state); update();
   }, { passive: false });
 }
