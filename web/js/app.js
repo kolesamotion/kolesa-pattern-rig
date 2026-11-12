@@ -73,8 +73,8 @@ function makeSlider(parent, key, labelKey) {
   const [min, max, step] = LIMITS[key];
   const el = document.createElement('div');
   el.className = 'slider';
-  el.innerHTML = `<div class="name"><label class="kds-label" data-t="${labelKey}"></label><span class="unit">${UNITS[key] || ''}</span></div>` +
-    `<input type="range" min="${min}" max="${max}" step="${step}"><input class="kds-input" type="number" min="${min}" max="${max}" step="${step}">`;
+  el.innerHTML = `<div class="name"><label class="kds-label" data-t="${labelKey}"></label></div>` +
+    `<input type="range" min="${min}" max="${max}" step="${step}"><input class="kds-input" type="number" min="${min}" max="${max}" step="${step}" data-unit="${UNITS[key] || ''}">`;
   parent.appendChild(el);
   const [range, num] = el.querySelectorAll('input');
   const onInput = (v) => { state[key] = Math.min(max, Math.max(min, +v)); linkThickness(key); update(); };
@@ -273,7 +273,7 @@ function render() {
   $('frame').innerHTML = buildSVG(s);
   for (const [k, { range, num }] of Object.entries(sliders)) {
     const v = +(+s[k]).toFixed(2);
-    if (document.activeElement !== num) num.value = v;
+    if (document.activeElement !== num) { num.value = v; placeUnit(num); }
     range.value = v; paintRange(range);
   }
   for (const k of BOOL_KEYS) $(k).checked = !!s[k];
@@ -369,8 +369,8 @@ document.addEventListener('input', (e) => { if (e.target.type === 'range') paint
 
 function syncFormat() {
   const s = state, ae = document.activeElement;
-  if (ae !== $('width')) $('width').value = s.width;
-  if (ae !== $('height')) $('height').value = s.height;
+  if (ae !== $('width')) { $('width').value = s.width; placeUnit($('width')); }
+  if (ae !== $('height')) { $('height').value = s.height; placeUnit($('height')); }
   // During the aspect-ratio animation the slider and label show the target, not the in-between sizes.
   const [fw, fh] = sizeTarget || [s.width, s.height];
   const r = fw / fh;
@@ -512,6 +512,26 @@ function downloadSVG() {
 // ---------- mouse wheel on sliders and number fields ----------
 // Hovering a slider or number field in the panel and turning the wheel changes the value (up = more, Shift = ×10).
 // If the panel itself was scrolling a moment ago, the wheel keeps scrolling, so passing over a control mid-scroll doesn't grab it.
+// Value and unit sit together, centred: the input's text is centred in a box whose right padding leaves room
+// for the unit, and the unit label is placed right after the measured text.
+const UNIT_GAP = 3, FIELD_PAD = 18;
+let measureCtx;
+function textW(el, str) {
+  measureCtx ||= document.createElement('canvas').getContext('2d');
+  const cs = getComputedStyle(el); measureCtx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+  return measureCtx.measureText(str).width;
+}
+function placeUnit(inp) {
+  const u = inp.parentNode?.querySelector?.('.unitIn');
+  if (!u) return;
+  if (inp._uv === inp.value && !placeUnit.force) return;
+  inp._uv = inp.value;
+  if (!u._f) { const cs = getComputedStyle(inp); u.style.fontSize = cs.fontSize; u.style.fontFamily = cs.fontFamily; u.style.fontWeight = cs.fontWeight; u._f = 1; }
+  const uw = textW(u, u.textContent), tw = textW(inp, inp.value);
+  inp.style.paddingLeft = FIELD_PAD + 'px';
+  inp.style.paddingRight = FIELD_PAD + uw + UNIT_GAP + 'px';
+  u.style.left = `calc(50% + ${(tw + UNIT_GAP - uw) / 2}px)`;
+}
 function nudge(el, n, big) {
   const min = el.min === '' ? -Infinity : +el.min, max = el.max === '' ? Infinity : +el.max;
   const st = +el.step || 1;
@@ -536,6 +556,9 @@ function setupWheel() {
     const sp = document.createElement('span'); sp.className = 'spin';
     sp.innerHTML = `<button type="button" tabindex="-1" data-d="1">${chev('M1 4l3-3 3 3')}</button><button type="button" tabindex="-1" data-d="-1">${chev('M1 1l3 3 3-3')}</button>`;
     w.appendChild(sp);
+    if (inp.dataset.unit) { const u = document.createElement('span'); u.className = 'unitIn'; u.textContent = inp.dataset.unit; w.appendChild(u); }
+    inp.addEventListener('input', () => placeUnit(inp));
+    placeUnit(inp);
     sp.addEventListener('mousedown', (e) => e.preventDefault());
     sp.addEventListener('click', (e) => { const btn = e.target.closest('button'); if (btn) nudge(inp, +btn.dataset.d, e.shiftKey); });
   });
@@ -554,90 +577,6 @@ function setupWheel() {
     else { acc += d; n = -Math.trunc(acc / 50); acc -= -n * 50; }
     if (!n) return;
     nudge(el, n, e.shiftKey);
-  }, { passive: false });
-}
-
-// H: keep the angle, reset pan and dolly so the pattern sits in frame as at the start.
-function frameAll() {
-  state.panX = 0; state.panY = 0; state.camDist = DEFAULTS.camDist;
-  update();
-}
-
-// ---------- export ----------
-function toast(msg, actionLabel, onAction) {
-  const el = $('toast'); el.textContent = msg;
-  el.classList.toggle('hasAction', !!actionLabel);
-  if (actionLabel) {
-    const b = document.createElement('button'); b.className = 'act'; b.type = 'button'; b.textContent = actionLabel;
-    b.addEventListener('click', () => { el.classList.remove('show'); onAction(); });
-    el.appendChild(b);
-  }
-  el.classList.add('show');
-  clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), actionLabel ? 5000 : 2600);
-}
-async function copyText(txt) {
-  try { await navigator.clipboard.writeText(txt); return true; } catch {
-    const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select();
-    let ok = false; try { ok = document.execCommand('copy'); } catch { /* ignore */ }
-    ta.remove(); return ok;
-  }
-}
-async function copySVG() { toast((await copyText(buildSVG(state))) ? t('copied') : t('copyFail')); }
-async function shareLink() {
-  const url = location.href.split('#')[0] + '#' + toQuery(state);
-  toast((await copyText(url)) ? t('linkCopied') : t('copyFail'));
-}
-function downloadSVG() {
-  const blob = new Blob([buildSVG(state)], { type: 'image/svg+xml' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `kolesa-pattern-${state.variant}-${state.width}x${state.height}.svg`;
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-}
-
-// ---------- mouse wheel on sliders and number fields ----------
-// Hovering a slider or number field in the panel and turning the wheel changes the value (up = more, Shift = ×10).
-// If the panel itself was scrolling a moment ago, the wheel keeps scrolling, so passing over a control mid-scroll doesn't grab it.
-function setupWheel() {
-  const panel = document.querySelector('.panel');
-  // custom steppers instead of the native spin box
-  const chev = (d) => `<svg viewBox="0 0 8 5"><path d="${d}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-  panel.querySelectorAll('input[type=number]').forEach((inp) => {
-    const w = document.createElement('span'); w.className = 'numWrap';
-    inp.replaceWith(w); w.appendChild(inp);
-    const sp = document.createElement('span'); sp.className = 'spin';
-    sp.innerHTML = `<button type="button" tabindex="-1" data-d="1">${chev('M1 4l3-3 3 3')}</button><button type="button" tabindex="-1" data-d="-1">${chev('M1 1l3 3 3-3')}</button>`;
-    w.appendChild(sp);
-    sp.addEventListener('mousedown', (e) => e.preventDefault());
-    sp.addEventListener('click', (e) => { const btn = e.target.closest('button'); if (btn) nudge(inp, +btn.dataset.d, e.shiftKey); });
-  });
-  let lastScroll = 0, lastWheelTarget = null, acc = 0;
-  panel.addEventListener('scroll', () => { lastScroll = performance.now(); }, { passive: true });
-  panel.addEventListener('wheel', (e) => {
-    const el = e.target.closest('input[type=range], input[type=number]');
-    if (!el || el.disabled || e.ctrlKey) { lastWheelTarget = null; return; }
-    if (el !== lastWheelTarget && performance.now() - lastScroll < 300) return;
-    e.preventDefault();
-    if (el !== lastWheelTarget) acc = 0;
-    lastWheelTarget = el;
-    const d = e.deltaY || e.deltaX;
-    let n;
-    if (e.deltaMode !== 0 || Math.abs(d) >= 50) n = -Math.sign(d);
-    else { acc += d; n = -Math.trunc(acc / 50); acc -= -n * 50; }
-    if (!n) return;
-    const min = el.min === '' ? -Infinity : +el.min, max = el.max === '' ? Infinity : +el.max;
-    const st = +el.step || 1;
-    let unit = st;
-    if (el.id === 'width' || el.id === 'height') unit = 10;
-    else if (isFinite(max - min) && (max - min) / st > 200) unit = Math.max(st, Math.round((max - min) / 200 / st) * st);
-    if (e.shiftKey) unit *= 10;
-    const dec = (String(st).split('.')[1] || '').length;
-    const v = Math.min(max, Math.max(min, +(+el.value + n * unit).toFixed(dec)));
-    if (v === +el.value) return;
-    el.value = v;
-    el.dispatchEvent(new Event('input', { bubbles: true }));
-    if (el.type === 'number') el.dispatchEvent(new Event('change', { bubbles: true }));
   }, { passive: false });
 }
 
@@ -724,5 +663,6 @@ if (!LANGS.includes(lang)) lang = 'ru';
 if (location.hash.length > 1) state = fromQuery(location.hash.slice(1));
 buildUI();
 setupWheel();
+document.fonts?.ready.then(() => { placeUnit.force = true; document.querySelectorAll('.panel input[type=number]').forEach(placeUnit); placeUnit.force = false; });
 applyLang();
 update();
