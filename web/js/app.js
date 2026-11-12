@@ -71,17 +71,19 @@ function linkThickness(key) {
   if (key === 'thickness') state.step = Math.min(sh, Math.max(sl, Math.round(state.thickness / state.tsRatio)));
 }
 
+// Slider range shorter than the field's: the field accepts up to LIMITS max.
+const SLIDER_MAX = { rings: 20 };
 function makeSlider(parent, key, labelKey) {
-  const [min, max, step] = LIMITS[key];
+  const [min, max, step] = LIMITS[key], smax = SLIDER_MAX[key] ?? max;
   const el = document.createElement('div');
   el.className = 'slider';
   el.innerHTML = `<div class="name"><label class="kds-label" data-t="${labelKey}"></label></div>` +
-    `<input type="range" min="${min}" max="${max}" step="${step}"><input class="kds-input" type="number" min="${min}" max="${max}" step="${step}" data-unit="${UNITS[key] || ''}">`;
+    `<input type="range" min="${min}" max="${smax}" step="${step}"><input class="kds-input" type="number" min="${min}" max="${max}" step="${step}" data-unit="${UNITS[key] || ''}">`;
   parent.appendChild(el);
   const [range, num] = el.querySelectorAll('input');
   const onInput = (v) => { state[key] = Math.min(max, Math.max(min, +v)); linkThickness(key); update(); };
   range.addEventListener('input', () => onInput(range.value));
-  num.addEventListener('change', () => onInput(num.value));
+  num.addEventListener('change', () => { onInput(num.value); num.value = +(+state[key]).toFixed(2); placeUnit(num); });   // show the clamped value
   sliders[key] = { range, num };
 }
 

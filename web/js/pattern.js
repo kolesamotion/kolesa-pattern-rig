@@ -10,7 +10,7 @@
 //   Arcs grow from 9 o'clock (Draw). The pattern is never deformed.
 
 export const LIMITS = {
-  rings: [1, 20, 1],
+  rings: [1, 100, 1],   // slider stops at 20 (SLIDER_MAX in app.js), the field takes up to 100
   shift: [0, 1, 0.01],
   step: [8, 300, 1],
   thickness: [1, 200, 1],
