@@ -112,7 +112,20 @@ input[type=color] { width: 32px; height: 32px; border: 1px solid var(--input); b
 .exportRow { display: flex; gap: var(--space-2); }
 .exportRow #copyBtn { flex: 1; min-width: 0; }
 .exportRow .kds-btn--size-icon-lg { flex: none; }
-.exportSec { padding-bottom: var(--space-2); }
+/* Export stays pinned to the bottom of the panel while the rest scrolls */
+.exportSec { position: sticky; bottom: calc(-1 * var(--space-6)); z-index: 2; background: var(--sidebar);
+  margin: var(--space-6) calc(-1 * var(--space-6)) calc(-1 * var(--space-6)); padding: var(--space-4) var(--space-6) var(--space-6); }
+.exportSec .secHead { margin: 0 0 var(--space-3); }
+/* Help icon with a hover / focus tooltip */
+.helpTip { position: relative; display: inline-flex; color: var(--muted-foreground); cursor: help; border-radius: 50%; }
+.helpTip:hover, .helpTip:focus-visible { color: var(--foreground); outline: none; }
+.helpTip .tip { position: absolute; right: -4px; bottom: calc(100% + 8px); width: max-content; white-space: nowrap; padding: var(--space-1_5) var(--space-2_5);
+  background: var(--brand-neutral); color: var(--white); border-radius: var(--radius-md); font-size: 12px; line-height: 16px;
+  opacity: 0; transform: translateY(4px); pointer-events: none; transition: opacity var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out); }
+.helpTip:hover .tip, .helpTip:focus-visible .tip { opacity: 1; transform: none; }
+:is([data-theme="dark"], .dark) .helpTip .tip { background: var(--white); color: var(--brand-neutral); }
+.helpTip .tip kbd { font: 400 12px/16px var(--font-mono); background: rgb(255 255 255 / 0.15); border-radius: var(--radius-sm); padding: 0 4px; }
+:is([data-theme="dark"], .dark) .helpTip .tip kbd { background: rgb(29 33 41 / 0.1); }
 
 /* Stage */
 .stage { position: relative; background: var(--muted); display: flex; align-items: center; justify-content: center; padding: 40px; overflow: hidden; }
@@ -139,8 +152,7 @@ body.resizing .ghost { visibility: hidden; }   /* frame is only CSS-scaled while
   .stage { order: -1; padding: var(--space-4); height: 45vh; position: sticky; top: 0; z-index: 1; }
   .panel { border-left: 0; padding: var(--space-4); }
   .resizer { display: none; }
+  .exportSec { bottom: 0; margin: var(--space-6) calc(-1 * var(--space-4)) calc(-1 * var(--space-4)); padding: var(--space-4); }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
-.copyHint { text-align: center; margin: var(--space-2) 0 0; }
-.copyHint kbd { font: 400 12px/16px var(--font-mono); color: var(--foreground); background: var(--muted); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0 5px; }
 #advSliders .check { margin: calc(-1 * var(--space-1_5)) 0 var(--space-4); }
