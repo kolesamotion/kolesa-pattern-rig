@@ -208,8 +208,11 @@ function applyLang() {
 }
 
 // ---------- render ----------
-let hashTimer;
-function update() {
+let hashTimer, renderRaf = 0, fitKey = '';
+// Batches all changes into one render per animation frame (high-rate mice fire many events per frame).
+function update() { if (!renderRaf) renderRaf = requestAnimationFrame(render); }
+function render() {
+  renderRaf = 0;
   const s = state;
   $('frame').innerHTML = buildSVG(s);
   for (const [k, { range, num }] of Object.entries(sliders)) {
@@ -230,7 +233,7 @@ function update() {
   $('gradBox').classList.toggle('show', s.gradient);
   $('cameraSec').classList.toggle('show', s.threeD);
   $('sizeLabel').textContent = `${s.width} × ${s.height}`;
-  fitFrame();
+  if (fitKey !== s.width + 'x' + s.height) fitFrame();   // stage resizes are handled by the ResizeObserver
   clearTimeout(hashTimer);
   hashTimer = setTimeout(() => history.replaceState(null, '', '#' + toQuery(state)), 250);
 }
@@ -292,6 +295,7 @@ function fitScale() {
 function fitFrame() {
   if (resizing) return;   // panel drag in progress: frame is CSS-scaled until release
   const fr = $('frame');
+  fitKey = state.width + 'x' + state.height;
   const k = fitScale();
   fr.style.width = Math.max(1, state.width * k) + 'px';
   fr.style.height = Math.max(1, state.height * k) + 'px';
