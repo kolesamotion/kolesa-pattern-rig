@@ -236,10 +236,15 @@ function update() {
 }
 
 // Panel width: drag the panel's left edge (double-click = default), arrows when focused. Saved per viewer.
+// While dragging, updates are batched to one per animation frame, and the frame is only
+// CSS-scaled (no SVG re-render / re-layout); the real fit happens on release.
 const PANEL_W = [300, 720, 380];
+let resizing = null;   // { k0, w0, h0 } while the handle is dragged
+function clampPanelW(w) {
+  return Math.round(Math.max(PANEL_W[0], Math.min(Math.min(PANEL_W[1], window.innerWidth - 320), w)));
+}
 function setPanelW(w, save = true) {
-  const max = Math.min(PANEL_W[1], window.innerWidth - 320);
-  w = Math.round(Math.max(PANEL_W[0], Math.min(max, w)));
+  w = clampPanelW(w);
   document.querySelector('.app').style.setProperty('--panel-w', w + 'px');
   if (save) store.set('kp.panelW', w);
   return w;
@@ -251,10 +256,22 @@ function setupResizer() {
     if (e.button !== 0) return;
     e.preventDefault(); el.setPointerCapture(e.pointerId);
     el.classList.add('on'); document.body.classList.add('resizing');
-    const x0 = e.clientX, w0 = w;
-    const move = (ev) => { w = setPanelW(w0 + (x0 - ev.clientX)); };
-    const up = () => { el.classList.remove('on'); document.body.classList.remove('resizing');
-      el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up); };
+    const fr = $('frame');
+    resizing = { w0: fr.offsetWidth, h0: fr.offsetHeight };
+    const x0 = e.clientX, wStart = w;
+    let raf = 0, target = w;
+    const apply = () => {
+      raf = 0; w = setPanelW(target, false);
+      const k = fitScale();
+      fr.style.transform = `scale(${Math.min(k * state.width / resizing.w0, 999)})`;
+    };
+    const move = (ev) => { target = wStart + (x0 - ev.clientX); if (!raf) raf = requestAnimationFrame(apply); };
+    const up = () => {
+      if (raf) { cancelAnimationFrame(raf); apply(); }
+      el.classList.remove('on'); document.body.classList.remove('resizing');
+      el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up);
+      resizing = null; fr.style.transform = ''; store.set('kp.panelW', w); fitFrame();
+    };
     el.addEventListener('pointermove', move); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
   });
   el.addEventListener('dblclick', () => { w = setPanelW(PANEL_W[2]); });
@@ -265,11 +282,17 @@ function setupResizer() {
   window.addEventListener('resize', () => { w = setPanelW(w, false); });
 }
 
-function fitFrame() {
-  const st = $('stage'), fr = $('frame');
+function fitScale() {
+  const st = $('stage');
   const pad = window.innerWidth <= 760 ? 32 : 80;
   const aw = st.clientWidth - pad, ah = st.clientHeight - pad - 20;
-  const k = Math.min(aw / state.width, ah / state.height);
+  return Math.min(aw / state.width, ah / state.height);
+}
+
+function fitFrame() {
+  if (resizing) return;   // panel drag in progress: frame is CSS-scaled until release
+  const fr = $('frame');
+  const k = fitScale();
   fr.style.width = Math.max(1, state.width * k) + 'px';
   fr.style.height = Math.max(1, state.height * k) + 'px';
 }
