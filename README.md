@@ -22,3 +22,14 @@ Brand book: Figma `BuFCFcybmuq8pbLxwmbNbh`, node 20:1716; reference Cavalry rig 
 - Ring colour `#005EFF` = `#0065DB` hard-light over `#0077FF`, flattened (blend modes are not exported).
 - The pattern is never deformed; arcs grow from 9 o'clock.
 - Relative scale 100 % = step is 11.6 % of the frame width (brand example 20:3150).
+
+## Design system
+
+UI follows the Kolesa design system (claude.ai artifact `7CtkB2B4Ma1KqD6GkQBkRa`). Copies of its `tokens.json`
+and `bundle.css` live in `design/kolesa-ds/`; `python3 tools/build_ds.py` regenerates `web/ds/kds.css`
+(token variables for light/dark + the `kds-btn`, `kds-input`, `kds-tabs`… styles). Icons are Core Icons,
+exported to `web/js/icons.js`. Theme: light/dark, key D.
+
+## Local build
+
+`python3 tools/build_local.py out.html` makes one self-contained HTML that opens from disk.

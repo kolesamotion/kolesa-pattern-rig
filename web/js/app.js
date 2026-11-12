@@ -1,5 +1,6 @@
 import { DEFAULTS, VARIANTS, LIMITS, buildSVG, scaleFactor } from './pattern.js?v=__V__';
 import { T, LANGS } from './i18n.js?v=__V__';
+import { ICONS } from './icons.js?v=__V__';
 
 const $ = (id) => document.getElementById(id);
 
@@ -67,8 +68,8 @@ function makeSlider(parent, key, labelKey) {
   const [min, max, step] = LIMITS[key];
   const el = document.createElement('div');
   el.className = 'slider';
-  el.innerHTML = `<div class="name"><span data-t="${labelKey}"></span><span class="unit">${UNITS[key] || ''}</span></div>` +
-    `<input type="range" min="${min}" max="${max}" step="${step}"><input type="number" min="${min}" max="${max}" step="${step}">`;
+  el.innerHTML = `<div class="name"><label class="kds-label" data-t="${labelKey}"></label><span class="unit">${UNITS[key] || ''}</span></div>` +
+    `<input type="range" min="${min}" max="${max}" step="${step}"><input class="kds-input" type="number" min="${min}" max="${max}" step="${step}">`;
   parent.appendChild(el);
   const [range, num] = el.querySelectorAll('input');
   const onInput = (v) => { state[key] = Math.min(max, Math.max(min, +v)); update(); };
@@ -88,17 +89,23 @@ function swatches(parent, colors, key, cls = '') {
 }
 
 function buildUI() {
+  document.querySelectorAll('i[data-icon]').forEach((i) => { i.outerHTML = ICONS[i.dataset.icon] || ''; });
+  $('themeBtn').addEventListener('click', toggleTheme);
+  window.addEventListener('keydown', (e) => {
+    if (/INPUT|SELECT|TEXTAREA/.test(document.activeElement?.tagName || '') || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key === 'd' || e.key === 'в' || e.code === 'KeyD') toggleTheme();
+  });
   // languages
   for (const l of LANGS) {
     const b = document.createElement('button');
-    b.textContent = l === 'kk' ? 'kz' : l; b.dataset.l = l;
+    b.className = 'kds-tabs__trigger'; b.textContent = l === 'kk' ? 'kz' : l; b.dataset.l = l;
     b.addEventListener('click', () => { lang = l; store.set('kp.lang', l); applyLang(); });
     $('langs').appendChild(b);
   }
   // variants
   for (const v of Object.keys(VARIANTS)) {
     const b = document.createElement('button');
-    b.dataset.v = v; b.dataset.t = 'v_' + v;
+    b.className = 'kds-tabs__trigger'; b.dataset.v = v; b.dataset.t = 'v_' + v;
     b.addEventListener('click', () => { Object.assign(state, VARIANTS[v], { variant: v }); update(); });
     $('variants').appendChild(b);
   }
@@ -140,10 +147,17 @@ function buildUI() {
   $('copyBtn').addEventListener('click', copySVG);
   $('downloadBtn').addEventListener('click', downloadSVG);
   $('shareBtn').addEventListener('click', shareLink);
-  for (const id of ['resetBtn', 'resetTop']) $(id).addEventListener('click', () => { state = structuredClone(DEFAULTS); update(); toast(t('resetDone')); });
+  for (const id of ['resetTop']) $(id).addEventListener('click', () => { state = structuredClone(DEFAULTS); update(); toast(t('resetDone')); });
 
   setupDrag();
   new ResizeObserver(fitFrame).observe($('stage'));
+}
+
+// Design system: light / dark via data-theme on <html>; key D toggles (as in Kolesa services).
+function applyTheme(th) { document.documentElement.dataset.theme = th; }
+function toggleTheme() {
+  const th = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  applyTheme(th); store.set('kp.theme', th);
 }
 
 // Keep the on-screen size of the pattern when switching scale modes.
@@ -158,9 +172,10 @@ function switchScaleMode(mode) {
 function applyLang() {
   document.documentElement.lang = lang === 'kk' ? 'kk' : lang;
   document.querySelectorAll('[data-t]').forEach((el) => { el.textContent = t(el.dataset.t); });
+  document.querySelectorAll('[data-t-aria]').forEach((el) => { el.setAttribute('aria-label', t(el.dataset.tAria)); el.title = t(el.dataset.tAria); });
   $('presetName').placeholder = t('presetName');
   document.title = t('title');
-  $('langs').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.l === lang));
+  $('langs').querySelectorAll('button').forEach((b) => b.classList.toggle('is-active', b.dataset.l === lang));
   const rows = [
     ['k_orbit', 'ЛКМ'], ['k_roll', `${/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl'} + ЛКМ`], ['k_pan', 'СКМ'], ['k_dolly', 'ПКМ'],
     ['k_dolly', lang === 'en' ? 'Wheel' : lang === 'kk' ? 'Дөңгелек' : 'Колесо'], ['k_frame', 'H'],
@@ -186,8 +201,8 @@ function update() {
   $('width').value = s.width; $('height').value = s.height;
   const fi = FORMATS.findIndex((fm) => fm.w === s.width && fm.h === s.height);
   $('formatPreset').value = fi >= 0 ? String(fi) : 'custom';
-  $('variants').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === s.variant));
-  $('scaleMode').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === s.scaleMode));
+  $('variants').querySelectorAll('button').forEach((b) => b.classList.toggle('is-active', b.dataset.v === s.variant));
+  $('scaleMode').querySelectorAll('button').forEach((b) => b.classList.toggle('is-active', b.dataset.v === s.scaleMode));
   $('ringSw').querySelectorAll('.sw').forEach((b) => b.classList.toggle('on', b.dataset.c === s.ringColor.toUpperCase()));
   $('bgSw').querySelectorAll('.sw').forEach((b) => b.classList.toggle('on', b.dataset.c === s.bgColor.toUpperCase()));
   $('ringColor').value = s.ringColor; $('bgColor').value = s.bgColor;
@@ -302,9 +317,10 @@ function renderPresets() {
   if (!presets.length) { const li = document.createElement('li'); li.className = 'empty'; li.textContent = t('noPresets'); list.appendChild(li); return; }
   presets.forEach((p, i) => {
     const li = document.createElement('li');
-    const a = document.createElement('button'); a.className = 'apply'; a.textContent = p.name;
+    const a = document.createElement('button'); a.className = 'kds-btn kds-btn--ghost kds-btn--size-sm apply'; a.textContent = p.name;
     a.addEventListener('click', () => { state = fromQuery(p.q); update(); });
-    const d = document.createElement('button'); d.className = 'small'; d.textContent = t('del');
+    const d = document.createElement('button'); d.className = 'kds-btn kds-btn--ghost kds-btn--size-icon-sm';
+    d.innerHTML = ICONS.trash; d.setAttribute('aria-label', t('del')); d.title = t('del');
     d.addEventListener('click', () => { const ps = store.get('kp.presets', []); ps.splice(i, 1); store.set('kp.presets', ps); renderPresets(); });
     li.append(a, d); list.appendChild(li);
   });
@@ -319,6 +335,7 @@ function savePreset() {
 }
 
 // ---------- init ----------
+applyTheme(store.get('kp.theme', matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
 lang = store.get('kp.lang', 'ru');
 if (!LANGS.includes(lang)) lang = 'ru';
 if (location.hash.length > 1) state = fromQuery(location.hash.slice(1));
