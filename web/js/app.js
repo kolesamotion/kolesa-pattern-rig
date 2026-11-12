@@ -1,4 +1,4 @@
-import { DEFAULTS, VARIANTS, LIMITS, buildSVG } from './pattern.js';
+import { DEFAULTS, VARIANTS, LIMITS, buildSVG, scaleFactor } from './pattern.js';
 import { T, LANGS } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);
@@ -21,13 +21,13 @@ const GRADS = [
   { c: ['#C2DEFF', '#61ACFF', '#0077FF'], a: 90 },   // brand gradient 3
 ];
 const UNITS = { shift: '', step: 'px', thickness: 'px', gap: '°', twist: '°', r0: 'px', draw: '%', dropout: '%', scale: '%', gradAngle: '°', rotX: '°', rotY: '°', rotZ: '°', camDist: 'px' };
-const NUM_KEYS = ['rings', 'shift', 'step', 'thickness', 'gap', 'twist', 'r0', 'skip', 'draw', 'dropout', 'seed', 'gradAngle', 'width', 'height', 'cx', 'cy', 'scale', 'rotX', 'rotY', 'rotZ', 'camDist'];
+const NUM_KEYS = ['rings', 'shift', 'step', 'thickness', 'gap', 'twist', 'r0', 'skip', 'draw', 'dropout', 'seed', 'gradAngle', 'width', 'height', 'cx', 'cy', 'scale', 'rotX', 'rotY', 'rotZ', 'camDist', 'panX', 'panY'];
 const BOOL_KEYS = ['core', 'variation', 'threeD', 'gradient', 'bgOn'];
 const STR_KEYS = ['variant', 'ringColor', 'bgColor', 'scaleMode'];
 
 let state = structuredClone(DEFAULTS);
 let lang = 'ru';
-let tool = 'move';
+const held = new Set();   // number keys 1/2/3 held (Cinema 4D navigation)
 const CAM_KEYS = ['rotX', 'rotY', 'rotZ', 'camDist'];
 const sliders = {};
 
@@ -121,8 +121,7 @@ function buildUI() {
 
   for (const k of BOOL_KEYS) $(k).addEventListener('change', (e) => { state[k] = e.target.checked; update(); });
   $('scaleMode').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => switchScaleMode(b.dataset.v)));
-  $('resetCam').addEventListener('click', () => { for (const k of CAM_KEYS) state[k] = DEFAULTS[k]; update(); });
-  $('tools').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { tool = b.dataset.v; update(); }));
+  $('resetCam').addEventListener('click', () => { for (const k of [...CAM_KEYS, 'panX', 'panY']) state[k] = DEFAULTS[k]; update(); });
   $('centerBtn').addEventListener('click', () => { state.cx = 0.5; state.cy = 0.5; update(); });
 
   swatches($('ringSw'), RING_COLORS, 'ringColor');
@@ -163,6 +162,17 @@ function applyLang() {
   $('presetName').placeholder = t('presetName');
   document.title = t('title');
   $('langs').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.l === lang));
+  const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
+  const alt = isMac ? '⌥ Option' : 'Alt';
+  const rows = [
+    ['k_orbit', `${alt} + ЛКМ`, '3 + ЛКМ'], ['k_pan', `${alt} + СКМ`, '1 + ЛКМ'],
+    ['k_dolly', `${alt} + ПКМ`, '2 + ЛКМ'], ['k_dolly', lang === 'en' ? 'Wheel' : lang === 'kk' ? 'Дөңгелек' : 'Колесо'],
+    ['k_move', 'ЛКМ'], ['k_frame', 'H'],
+  ];
+  const mb = lang === 'en' ? { 'ЛКМ': 'LMB', 'СКМ': 'MMB', 'ПКМ': 'RMB' } : lang === 'kk' ? { 'ЛКМ': 'СТБ', 'СКМ': 'ОТБ', 'ПКМ': 'ОңТБ' } : {};
+  const tr = (x) => x.replace(/ЛКМ|СКМ|ПКМ/g, (m) => mb[m] || m);
+  $('camKeys').innerHTML = rows.map(([k, a, b]) =>
+    `<li><span>${t(k)}</span><span><kbd>${tr(a)}</kbd>${b ? ` ${t('k_or')} <kbd>${tr(b)}</kbd>` : ''}</span></li>`).join('');
   renderPresets();
 }
 
@@ -188,9 +198,6 @@ function update() {
   ['g0', 'g1', 'g2'].forEach((id, i) => { $(id).value = s.grad[i]; });
   $('gradBox').classList.toggle('show', s.gradient);
   $('cameraSec').classList.toggle('show', s.threeD);
-  $('tools').classList.toggle('show', s.threeD);
-  $('tools').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === tool));
-  $('frame').classList.toggle('orbit', s.threeD && tool === 'orbit');
   $('sizeLabel').textContent = `${s.width} × ${s.height}`;
   fitFrame();
   clearTimeout(hashTimer);
@@ -206,29 +213,55 @@ function fitFrame() {
   fr.style.height = Math.max(1, state.height * k) + 'px';
 }
 
+// Navigation. With 3D on, the camera follows Cinema 4D: Alt+LMB orbit, Alt+MMB pan, Alt+RMB dolly,
+// 1/2/3 + LMB = pan / dolly / orbit, wheel = dolly, H = frame. Plain LMB moves the pattern itself.
 function setupDrag() {
   const fr = $('frame');
   let start = null;
+  const typing = () => /INPUT|SELECT|TEXTAREA/.test(document.activeElement?.tagName || '');
+  window.addEventListener('keydown', (e) => {
+    if (typing() || e.metaKey || e.ctrlKey) return;
+    if (['1', '2', '3'].includes(e.key)) held.add(e.key);
+    if ((e.key === 'h' || e.key === 'H' || e.code === 'KeyH') && state.threeD) { frameAll(); e.preventDefault(); }
+  });
+  window.addEventListener('keyup', (e) => held.delete(e.key));
+  window.addEventListener('blur', () => held.clear());
   fr.addEventListener('contextmenu', (e) => { if (state.threeD) e.preventDefault(); });
+  fr.addEventListener('auxclick', (e) => e.preventDefault());
   fr.addEventListener('pointerdown', (e) => {
-    const orbit = state.threeD && (tool === 'orbit' || e.altKey || e.button === 2);
-    start = { x: e.clientX, y: e.clientY, cx: state.cx, cy: state.cy, rx: state.rotX, ry: state.rotY, w: fr.clientWidth, h: fr.clientHeight, orbit };
-    fr.setPointerCapture(e.pointerId); fr.classList.add('drag');
+    let mode = 'move';
+    if (state.threeD) {
+      if (e.altKey) mode = ['orbit', 'pan', 'dolly'][e.button] || 'move';
+      else if (e.button === 0 && held.has('3')) mode = 'orbit';
+      else if (e.button === 0 && held.has('1')) mode = 'pan';
+      else if (e.button === 0 && held.has('2')) mode = 'dolly';
+      else if (e.button !== 0) return;
+    } else if (e.button !== 0) return;
+    e.preventDefault();
+    start = { x: e.clientX, y: e.clientY, mode, s: { ...state } };
+    fr.setPointerCapture(e.pointerId); fr.classList.add('drag', 'c4d-' + mode);
   });
   fr.addEventListener('pointermove', (e) => {
     if (!start) return;
-    const dx = e.clientX - start.x, dy = e.clientY - start.y;
-    if (start.orbit) {
-      const wrap = (a) => ((a + 540) % 360) - 180;
-      state.rotY = wrap(start.ry + dx * 0.4);
-      state.rotX = wrap(start.rx - dy * 0.4);
+    const dx = e.clientX - start.x, dy = e.clientY - start.y, s0 = start.s;
+    const px = state.width / fr.clientWidth;               // screen px -> frame px
+    const toLocal = px / scaleFactor(state);               // screen px -> pattern units
+    const wrap = (a) => ((a + 540) % 360) - 180;
+    if (start.mode === 'orbit') {
+      state.rotY = wrap(s0.rotY + dx * 0.4);
+      state.rotX = wrap(s0.rotX - dy * 0.4);
+    } else if (start.mode === 'pan') {
+      state.panX = s0.panX + dx * toLocal;
+      state.panY = s0.panY + dy * toLocal;
+    } else if (start.mode === 'dolly') {
+      state.camDist = s0.camDist * Math.exp(-(dx - dy) * 0.004);
     } else {
-      state.cx = start.cx + dx / start.w;
-      state.cy = start.cy + dy / start.h;
+      state.cx = s0.cx + dx / fr.clientWidth;
+      state.cy = s0.cy + dy / fr.clientHeight;
     }
     clampAll(state); update();
   });
-  const end = () => { start = null; fr.classList.remove('drag'); };
+  const end = () => { start = null; fr.className = 'frame'; };
   fr.addEventListener('pointerup', end); fr.addEventListener('pointercancel', end);
   fr.addEventListener('wheel', (e) => {
     if (!state.threeD) return;
@@ -236,6 +269,12 @@ function setupDrag() {
     state.camDist = state.camDist * Math.exp(e.deltaY * 0.0015);
     clampAll(state); update();
   }, { passive: false });
+}
+
+// H: keep the angle, reset pan and dolly so the pattern sits in frame as at the start.
+function frameAll() {
+  state.panX = 0; state.panY = 0; state.camDist = DEFAULTS.camDist;
+  update();
 }
 
 // ---------- export ----------

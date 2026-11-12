@@ -27,6 +27,8 @@ export const LIMITS = {
   rotY: [-180, 180, 1],
   rotZ: [-180, 180, 1],
   camDist: [300, 20000, 10],
+  panX: [-20000, 20000, 1],
+  panY: [-20000, 20000, 1],
 };
 
 // Brand defaults (Figma 20:1716).
@@ -37,7 +39,8 @@ export const DEFAULTS = {
   variation: false,       // per-ring gap/angle variation (broken C-rings)
   threeD: false,          // real 3D: rings rotated in space, perspective camera
   rotX: 55, rotY: -25, rotZ: 0,   // degrees
-  camDist: 2400,          // camera distance from the pattern centre, brand px
+  camDist: 2400,          // camera distance from the pattern centre, brand px (dolly)
+  panX: 0, panY: 0,       // camera pan, brand px in the image plane
   gradient: false,
   ringColor: '#005EFF',
   bgColor: '#0077FF',
@@ -54,7 +57,7 @@ export const DEFAULTS = {
 export const VARIANTS = {
   main:     { shift: 1, gap: 0, twist: 0, variation: false, threeD: false, gradient: false, skip: 0, core: true, rings: 8, scaleMode: 'rel', scale: 100 },
   cropped:  { shift: 1, gap: 0, twist: 0, variation: false, threeD: false, gradient: false, skip: 3, core: false, rings: 9, scaleMode: 'rel', scale: 45 },
-  '3d':     { shift: 1, gap: 0, twist: 0, variation: false, threeD: true,  gradient: false, skip: 0, core: true, rings: 8, rotX: 55, rotY: -25, rotZ: 0, camDist: 2400 },
+  '3d':     { shift: 1, gap: 0, twist: 0, variation: false, threeD: true,  gradient: false, skip: 0, core: true, rings: 8, rotX: 55, rotY: -25, rotZ: 0, camDist: 2400, panX: 0, panY: 0 },
   broken:   { shift: 0, gap: 120, twist: 0, variation: true, threeD: false, gradient: false, skip: 0, core: false, rings: 5, scaleMode: 'rel', scale: 60 },
   gradient: { shift: 1, gap: 0, twist: 0, variation: false, threeD: false, gradient: true,  skip: 0, core: true, rings: 8 },
 };
@@ -130,17 +133,20 @@ export function buildRings(s) {
 
 // 3D: the pattern lies in the plane z = 0; it is turned by rotZ (in its plane), tilted by rotX,
 // turned by rotY, then seen by a perspective camera at distance camDist looking at the centre.
+// The focal length is fixed (FOCAL), so moving the camera closer (dolly) both enlarges the pattern
+// and strengthens perspective, like a real camera in Cinema 4D. Pan shifts the image plane.
+export const FOCAL = 2400;
 export function makeProjector(s) {
   const cz = Math.cos(rad(s.rotZ)), sz = Math.sin(rad(s.rotZ));
   const cx = Math.cos(rad(s.rotX)), sx = Math.sin(rad(s.rotX));
   const cy = Math.cos(rad(s.rotY)), sy = Math.sin(rad(s.rotY));
-  const D = s.camDist;
+  const D = s.camDist, px = s.panX || 0, py = s.panY || 0;
   return (x, y) => {
     const x1 = x * cz - y * sz, y1 = x * sz + y * cz;
     const y2 = y1 * cx, z2 = y1 * sx;
     const x3 = x1 * cy + z2 * sy, z3 = -x1 * sy + z2 * cy;
-    const w = D / Math.max(D * 0.05, D + z3);
-    return [x3 * w, y2 * w];
+    const w = FOCAL / Math.max(D * 0.05, D + z3);
+    return [x3 * w + px, y2 * w + py];
   };
 }
 

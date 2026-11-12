@@ -18,6 +18,7 @@ Brand book: Figma `BuFCFcybmuq8pbLxwmbNbh`, node 20:1716; reference Cavalry rig 
 - Upper centre-line radius `r0 + (n−1)·step`, lower `+ shift·step/2` (signature shift).
 - Defaults: 8 rings, step 72, thickness 40, r0 60, shift 1, centre half-disc on.
 - 3D: rings lie in z = 0, rotated by Z (in plane), X, Y and seen by a perspective camera (`camDist`); exported as filled outlines because a stroke cannot follow foreshortening.
+- 3D navigation follows Cinema 4D: Alt+LMB orbit, Alt+MMB pan, Alt+RMB dolly, 1/2/3 + LMB = pan/dolly/orbit, wheel = dolly, H = frame; plain LMB moves the pattern. Fixed focal length, so dolly also changes perspective.
 - Ring colour `#005EFF` = `#0065DB` hard-light over `#0077FF`, flattened (blend modes are not exported).
 - The pattern is never deformed; arcs grow from 9 o'clock.
 - Relative scale 100 % = step is 11.6 % of the frame width (brand example 20:3150).
