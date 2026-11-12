@@ -23,6 +23,8 @@ const GRADS = [
 ];
 const UNITS = { shift: '', step: 'px', thickness: 'px', gap: '°', twist: '°', r0: 'px', draw: '%', dropout: '%', scale: '%', gradAngle: '°', rotX: '°', rotY: '°', rotZ: '°', camDist: 'px' };
 const NUM_KEYS = ['rings', 'shift', 'step', 'thickness', 'gap', 'twist', 'r0', 'skip', 'draw', 'dropout', 'seed', 'gradAngle', 'width', 'height', 'cx', 'cy', 'scale', 'rotX', 'rotY', 'rotZ', 'camDist', 'panX', 'panY'];
+// Geometry section (incl. «Дополнительно»); 3D mode and camera are kept.
+const GEOM_KEYS = ['rings', 'shift', 'step', 'thickness', 'gap', 'twist', 'variation', 'r0', 'skip', 'draw', 'dropout', 'seed', 'core'];
 const BOOL_KEYS = ['core', 'variation', 'threeD', 'gradient', 'bgOn'];
 const STR_KEYS = ['variant', 'ringColor', 'bgColor', 'scaleMode'];
 
@@ -138,6 +140,10 @@ function buildUI() {
 
   for (const k of BOOL_KEYS) $(k).addEventListener('change', (e) => { state[k] = e.target.checked; update(); });
   $('scaleMode').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => switchScaleMode(b.dataset.v)));
+  $('resetGeom').addEventListener('click', () => {
+    for (const k of GEOM_KEYS) state[k] = DEFAULTS[k];
+    update(); toast(t('resetGeomDone'));
+  });
   $('resetCam').addEventListener('click', () => { for (const k of [...CAM_KEYS, 'rotZ', 'panX', 'panY']) state[k] = DEFAULTS[k]; update(); });
   $('centerBtn').addEventListener('click', () => { state.cx = 0.5; state.cy = 0.5; update(); });
 
