@@ -1,5 +1,5 @@
-import { DEFAULTS, VARIANTS, LIMITS, buildSVG, scaleFactor } from './pattern.js';
-import { T, LANGS } from './i18n.js';
+import { DEFAULTS, VARIANTS, LIMITS, buildSVG, scaleFactor } from './pattern.js?v=__V__';
+import { T, LANGS } from './i18n.js?v=__V__';
 
 const $ = (id) => document.getElementById(id);
 
