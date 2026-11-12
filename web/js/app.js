@@ -274,7 +274,7 @@ function render() {
   for (const [k, { range, num }] of Object.entries(sliders)) {
     const v = +(+s[k]).toFixed(2);
     if (document.activeElement !== num) num.value = v;
-    range.value = v;
+    range.value = v; paintRange(range);
   }
   for (const k of BOOL_KEYS) $(k).checked = !!s[k];
   $('tsRatioText').textContent = s.linkTS ? `${Math.round(s.tsRatio * 100)} %` : '';
@@ -361,6 +361,10 @@ function renderThumbs() {
 }
 
 // Format controls from state: fields (unless being typed in), slider stop, proportion icon, ratio text.
+// Filled part of a range track (custom-styled, see style.css).
+function paintRange(r) { r.style.setProperty('--p', ((r.value - r.min) / (r.max - r.min || 1)) * 100 + '%'); }
+document.addEventListener('input', (e) => { if (e.target.type === 'range') paintRange(e.target); });
+
 function syncFormat() {
   const s = state, ae = document.activeElement;
   if (ae !== $('width')) $('width').value = s.width;
@@ -369,6 +373,7 @@ function syncFormat() {
   let best = 0;
   RATIOS.forEach(([a, b], i) => { if (Math.abs(Math.log(a / b / r)) < Math.abs(Math.log(RATIOS[best][0] / RATIOS[best][1] / r))) best = i; });
   if (ae !== $('ratio')) $('ratio').value = best;
+  paintRange($('ratio'));
   const g = gcd(s.width, s.height), a = s.width / g, b = s.height / g;
   $('ratioText').textContent = a <= 99 && b <= 99 ? `${a}:${b}` : r >= 1 ? `${+r.toFixed(2)}:1` : `1:${+(1 / r).toFixed(2)}`;
   const i = $('ratioIcon').firstElementChild;
