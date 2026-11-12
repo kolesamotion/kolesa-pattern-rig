@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kolesa Pattern</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <aside class="panel">
+    <header class="head">
+      <h1 data-t="title"></h1>
+      <div class="langs" id="langs"></div>
+    </header>
+
+    <section>
+      <h2 data-t="variant"></h2>
+      <div class="seg wrap" id="variants"></div>
+    </section>
+
+    <section>
+      <h2 data-t="format"></h2>
+      <select id="formatPreset"></select>
+      <div class="row2">
+        <label><span data-t="width"></span><input type="number" id="width" min="16" max="20000"></label>
+        <label><span data-t="height"></span><input type="number" id="height" min="16" max="20000"></label>
+      </div>
+    </section>
+
+    <section>
+      <h2 data-t="geometry"></h2>
+      <div id="geomSliders"></div>
+      <label class="check"><input type="checkbox" id="variation"><span data-t="variation"></span></label>
+      <label class="check"><input type="checkbox" id="perspective"><span data-t="perspectiveOn"></span></label>
+      <details>
+        <summary data-t="advanced"></summary>
+        <div id="advSliders"></div>
+        <label class="check"><input type="checkbox" id="core"><span data-t="core"></span></label>
+      </details>
+    </section>
+
+    <section>
+      <h2 data-t="position"></h2>
+      <div class="seg" id="scaleMode">
+        <button data-v="rel" data-t="scaleRel"></button>
+        <button data-v="abs" data-t="scaleAbs"></button>
+      </div>
+      <div id="scaleSlider"></div>
+      <button class="ghost" id="centerBtn" data-t="center"></button>
+      <p class="hint" data-t="dragHint"></p>
+    </section>
+
+    <section>
+      <h2 data-t="colors"></h2>
+      <div class="colorRow"><span class="lbl" data-t="ring"></span><div class="swatches" id="ringSw"></div><input type="color" id="ringColor"></div>
+      <div class="colorRow"><span class="lbl" data-t="bg"></span><div class="swatches" id="bgSw"></div><input type="color" id="bgColor"></div>
+      <label class="check"><input type="checkbox" id="bgOn"><span data-t="bgOn"></span></label>
+      <label class="check"><input type="checkbox" id="gradient"><span data-t="gradientOn"></span></label>
+      <div id="gradBox" class="gradBox">
+        <div class="swatches grads" id="gradSw"></div>
+        <div class="gradStops"><input type="color" id="g0"><input type="color" id="g1"><input type="color" id="g2"></div>
+        <div id="angleSlider"></div>
+      </div>
+    </section>
+
+    <section>
+      <h2 data-t="presets"></h2>
+      <div class="presetSave"><input type="text" id="presetName"><button id="savePreset" data-t="save"></button></div>
+      <ul id="presetList" class="presetList"></ul>
+    </section>
+
+    <section class="exportSec">
+      <h2 data-t="export"></h2>
+      <button class="primary" id="copyBtn" data-t="copy"></button>
+      <div class="row2">
+        <button id="downloadBtn" data-t="download"></button>
+        <button id="shareBtn" data-t="share"></button>
+      </div>
+      <button class="ghost" id="resetBtn" data-t="reset"></button>
+    </section>
+  </aside>
+
+  <main class="stage" id="stage">
+    <div class="frame" id="frame"></div>
+    <div class="size" id="sizeLabel"></div>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
