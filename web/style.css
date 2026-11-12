@@ -49,9 +49,10 @@ section { padding: var(--space-6) 0 0; margin-top: var(--space-6); border-top: 1
 .presetCard:focus-visible .thumb { box-shadow: 0 0 0 2px var(--sidebar), 0 0 0 4px color-mix(in oklch, var(--ring) 50%, transparent); }
 
 /* Aspect-ratio slider (Figma Temp 21:8904): label · track · proportion icon · ratio */
-.ratioRow { display: grid; grid-template-columns: auto 1fr 22px 48px; align-items: center; gap: var(--space-2) var(--space-3); min-height: 32px; }
+.ratioRow { display: grid; grid-template-columns: auto 1fr 64px; align-items: center; gap: var(--space-2) var(--space-3); min-height: 32px; }
 .ratioRow .kds-label { white-space: nowrap; }
-.ratioIcon { display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; }
+.ratioOut { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-2); }   /* fixed cell: slider width never changes */
+.ratioIcon { flex: none; display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; }
 .ratioIcon i { display: block; border: 1.5px solid var(--foreground); border-radius: 3px; box-sizing: border-box; }
 .ratioText { font: 400 12px/16px var(--font-mono); color: var(--muted-foreground); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 select.kds-input { appearance: none; padding-right: 32px; cursor: pointer;
