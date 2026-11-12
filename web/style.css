@@ -109,8 +109,9 @@ input[type=color] { width: 32px; height: 32px; border: 1px solid var(--input); b
 .presetList li .apply { flex: 1; justify-content: flex-start; }
 .presetList li.empty { color: var(--muted-foreground); font-size: 12px; line-height: 16px; }
 
-.exportSec .row2 { grid-template-columns: 1fr; gap: var(--space-2); margin-top: var(--space-2); }
-.exportSec .row2 .kds-btn { width: 100%; }
+.exportRow { display: flex; gap: var(--space-2); }
+.exportRow #copyBtn { flex: 1; min-width: 0; }
+.exportRow .kds-btn--size-icon-lg { flex: none; }
 .exportSec { padding-bottom: var(--space-2); }
 
 /* Stage */
