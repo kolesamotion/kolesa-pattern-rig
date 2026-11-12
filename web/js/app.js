@@ -318,6 +318,7 @@ function render() {
   $('bgSw').querySelectorAll('.sw').forEach((b) => b.classList.toggle('on', b.dataset.c === s.bgColor.toUpperCase()));
   $('ringColor').value = s.ringColor; $('bgColor').value = s.bgColor;
   ['g0', 'g1', 'g2'].forEach((id, i) => { $(id).value = s.grad[i]; });
+  syncHex();
   $('gradBox').classList.toggle('show', s.gradient);
   $('cameraSec').classList.toggle('show', s.threeD);
   $('sizeLabel').textContent = `${s.width} × ${s.height}`;
@@ -540,6 +541,39 @@ function downloadSVG() {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
+// ---------- colour fields ----------
+// Each <input type=color> becomes a Figma-like field: swatch (click = system picker) + HEX that is always shown and editable.
+// Typing a valid 3- or 6-digit hex applies it live; Enter/blur normalises it, Esc or an invalid value reverts.
+function setupColorFields() {
+  document.querySelectorAll('.panel input[type=color]').forEach((col) => {
+    const f = document.createElement('div'); f.className = 'colorField';
+    col.replaceWith(f); f.appendChild(col);
+    const hex = document.createElement('input');
+    hex.className = 'hex'; hex.type = 'text'; hex.maxLength = 7; hex.spellcheck = false; hex.autocomplete = 'off';
+    hex.setAttribute('aria-label', 'HEX');
+    f.appendChild(hex); col._hex = hex;
+    const parse = (v) => { v = v.trim().replace(/^#/, ''); if (/^[0-9a-f]{3}$/i.test(v)) v = v.replace(/./g, '$&$&'); return /^[0-9a-f]{6}$/i.test(v) ? '#' + v.toUpperCase() : null; };
+    const apply = (c) => { col.value = c; col.dispatchEvent(new Event('input', { bubbles: true })); };
+    hex.addEventListener('input', () => { const c = parse(hex.value); if (c && hex.value.replace('#', '').length === 6) apply(c); });
+    const commit = () => { const c = parse(hex.value); if (c && c !== col.value.toUpperCase()) apply(c); hex.value = col.value.slice(1).toUpperCase(); };
+    hex.addEventListener('keydown', (e) => {
+      e.stopPropagation();
+      if (e.key === 'Enter') { commit(); hex.blur(); }
+      if (e.key === 'Escape') { hex.value = col.value.slice(1).toUpperCase(); hex.blur(); }
+    });
+    hex.addEventListener('blur', commit);
+    hex.addEventListener('focus', () => hex.select());
+    hex.addEventListener('copy', (e) => e.stopPropagation());
+    col.addEventListener('input', () => { if (document.activeElement !== hex) hex.value = col.value.slice(1).toUpperCase(); });
+  });
+  syncHex();
+}
+function syncHex() {
+  document.querySelectorAll('.panel input[type=color]').forEach((col) => {
+    if (col._hex && document.activeElement !== col._hex) col._hex.value = col.value.slice(1).toUpperCase();
+  });
+}
+
 // ---------- mouse wheel on sliders and number fields ----------
 // Hovering a slider or number field in the panel and turning the wheel changes the value (up = more, Shift = ×10).
 // If the panel itself was scrolling a moment ago, the wheel keeps scrolling, so passing over a control mid-scroll doesn't grab it.
@@ -693,6 +727,7 @@ lang = store.get('kp.lang', 'ru');
 if (!LANGS.includes(lang)) lang = 'ru';
 if (location.hash.length > 1) state = fromQuery(location.hash.slice(1));
 buildUI();
+setupColorFields();
 setupWheel();
 document.fonts?.ready.then(() => { placeUnit.force = true; document.querySelectorAll('.panel input[type=number]').forEach(placeUnit); placeUnit.force = false; });
 applyLang();

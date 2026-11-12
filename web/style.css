@@ -114,7 +114,8 @@ summary:hover { color: var(--foreground); }
 .cameraSec.show { display: block; }
 
 /* Colours */
-.colorRow { display: grid; grid-template-columns: 56px 1fr 32px; align-items: center; gap: var(--space-2); margin-bottom: var(--space-3); }
+.colorRow { display: grid; grid-template-columns: 1fr 120px; align-items: center; gap: var(--space-2) var(--space-3); margin-bottom: var(--space-4); }
+.colorRow .swatches { grid-column: 1 / -1; }
 .swatches { display: flex; gap: var(--space-1_5); flex-wrap: wrap; }
 .sw { width: 24px; height: 24px; border-radius: 50%; border: 1px solid color-mix(in oklch, var(--foreground) 15%, transparent); cursor: pointer; padding: 0; transition: box-shadow var(--duration-fast) var(--ease-out); }
 .sw:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 30%, transparent); }
@@ -123,7 +124,7 @@ summary:hover { color: var(--foreground); }
 input[type=color] { width: 32px; height: 32px; border: 1px solid var(--input); border-radius: var(--radius-md); padding: 3px; background: transparent; cursor: pointer; }
 .gradBox { display: none; margin-top: var(--space-3); }
 .gradBox.show { display: block; }
-.gradStops { display: flex; gap: var(--space-1_5); margin: var(--space-3) 0; }
+.gradStops { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); margin: var(--space-3) 0; }
 
 /* Presets */
 
@@ -201,3 +202,14 @@ body.resizing .ghost { visibility: hidden; }   /* frame is only CSS-scaled while
 .spin button { all: unset; display: grid; place-items: center; width: 14px; height: 11px; cursor: pointer; color: var(--muted-foreground); }
 .spin button:hover { color: var(--foreground); }
 .spin button svg { width: 8px; height: 5px; display: block; }
+
+/* Colour field, Figma-style: small swatch (opens the picker) + always-visible editable HEX. */
+.colorField { display: flex; align-items: center; gap: 8px; height: var(--control-sm, 32px); padding: 0 8px; border-radius: var(--radius-md);
+  background-color: color-mix(in srgb, var(--foreground) 5%, var(--sidebar)); min-width: 0; }
+.colorField:hover { background-color: color-mix(in srgb, var(--foreground) 9%, var(--sidebar)); }
+.colorField:focus-within { box-shadow: 0 0 0 2px color-mix(in oklch, var(--ring) 35%, transparent); }
+.panel .colorField input[type=color] { flex: none; width: 16px; height: 16px; padding: 0; border: 0; border-radius: 3px; background: none; cursor: pointer; }
+.colorField input[type=color]::-webkit-color-swatch-wrapper { padding: 0; }
+.colorField input[type=color]::-webkit-color-swatch { border: 0; border-radius: 3px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--foreground) 14%, transparent); }
+.colorField input[type=color]::-moz-color-swatch { border: 0; border-radius: 3px; }
+.panel .colorField .hex { all: unset; flex: 1; min-width: 0; font: inherit; font-size: 13px; font-variant-numeric: tabular-nums; letter-spacing: .02em; color: var(--foreground); text-align: left; text-transform: uppercase; cursor: text; }
