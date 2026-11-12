@@ -142,7 +142,7 @@ function buildUI() {
   }
 
   for (const k of ['rings', 'r0', 'step', 'thickness']) makeSlider($('geomSliders'), k, k);
-  // Shift is a switch (0 ↔ 1); the change is animated, ease-in-out 300 ms.
+  // Shift is a switch (0 ↔ 1); the change is animated, ease-in-out 150 ms.
   $('shiftOn').addEventListener('change', (e) => animateShift(e.target.checked ? 1 : 0));
   for (const k of ['gap', 'twist', 'skip', 'draw', 'dropout', 'seed']) makeSlider($('advSliders'), k, k);
   // 'Vary gaps per ring' only matters with a gap: keep it right under the Gap / Twist sliders.
@@ -231,7 +231,7 @@ function applyLang() {
 let shiftRaf = 0, shiftTarget = null;
 function animateShift(to) {
   cancelAnimationFrame(shiftRaf);
-  const from = state.shift, t0 = performance.now(), D = 300;
+  const from = state.shift, t0 = performance.now(), D = 150;
   const ease = (t) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);   // ease-in-out
   shiftTarget = to;
   let last = from;
