@@ -38,7 +38,7 @@ export const DEFAULTS = {
   rings: 8, shift: 1, step: 72, thickness: 40, gap: 0, twist: 0,
   r0: 60, core: true, skip: 0, draw: 100, dropout: 0, seed: 1,
   variation: false,       // per-ring gap/angle variation (broken C-rings)
-  linkTS: false,          // thickness follows step (UI only: thickness = step × tsRatio)
+  linkTS: true,           // thickness follows step (UI only: thickness = step × tsRatio)
   tsRatio: 40 / 72,       // brand ratio, Figma 20:1716
   threeD: false,          // real 3D: rings rotated in space, perspective camera
   rotX: 55, rotY: -25, rotZ: 0,   // degrees
