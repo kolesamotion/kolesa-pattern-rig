@@ -182,6 +182,7 @@ function buildUI() {
   sliders.twist.range.closest('.slider').after($('variation').closest('label'));
   for (const k of CAM_KEYS) makeSlider($('camSliders'), k, k);
   makeSlider($('scaleSlider'), 'scale', 'scale');
+  sliders.scale.range.closest('.slider').querySelector('.name').appendChild($('scaleMode'));   // small mode switch right of «Масштаб»
   makeSlider($('scaleSlider'), 'rotZ', 'rotZ');
   makeSlider($('angleSlider'), 'gradAngle', 'angle');
 
@@ -623,7 +624,7 @@ function syncHex() {
 // If the panel itself was scrolling a moment ago, the wheel keeps scrolling, so passing over a control mid-scroll doesn't grab it.
 // Value and unit sit together, centred: the input's text is centred in a box whose right padding leaves room
 // for the unit, and the unit label is placed right after the measured text.
-const UNIT_GAP = 3, FIELD_PAD = 18;
+const UNIT_GAP = 3, FIELD_PAD = 14;
 let measureCtx;
 function textW(el, str) {
   measureCtx ||= document.createElement('canvas').getContext('2d');

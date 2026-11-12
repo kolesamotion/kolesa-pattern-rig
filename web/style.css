@@ -199,7 +199,7 @@ body.resizing .ghost { visibility: hidden; }   /* frame is only CSS-scaled while
 .numWrap .spin { position: absolute; top: 50%; right: 2px; transform: translateY(-50%); display: flex; flex-direction: column; opacity: 0; transition: opacity .12s; }
 .numWrap:hover .spin, .numWrap:focus-within .spin { opacity: 1; }
 .panel .kds-input { text-align: center; }
-.panel .numWrap > input.kds-input { padding-left: 18px; padding-right: 18px; }
+.panel .numWrap > input.kds-input { padding-left: 14px; padding-right: 14px; }
 .unitIn { position: absolute; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--muted-foreground); font-size: inherit; white-space: nowrap; }
 .spin button { all: unset; display: grid; place-items: center; width: 14px; height: 11px; cursor: pointer; color: var(--muted-foreground); }
 .spin button:hover { color: var(--foreground); }
@@ -238,3 +238,8 @@ body.resizing .ghost { visibility: hidden; }   /* frame is only CSS-scaled while
 :is([data-theme="dark"], .dark) .helpTip .tip .keys kbd { background: rgb(29 33 41 / 0.1); }
 .helpTip .tip .keys li.note { display: block; margin-top: 4px; padding-top: 6px; border-top: 1px solid rgb(255 255 255 / 0.12); opacity: .75; }
 :is([data-theme="dark"], .dark) .helpTip .tip .keys li.note { border-top-color: rgb(29 33 41 / 0.12); }
+
+/* Small segmented switch inside a slider's title row (Scale: format-relative / px). */
+.slider .name { align-items: center; }
+.miniSeg { display: inline-flex; height: 24px; padding: 2px; gap: 0; width: auto; margin: 0; border-radius: var(--radius-md); }
+.miniSeg .kds-tabs__trigger { height: 20px; padding: 0 8px; font-size: 12px; line-height: 16px; border-radius: calc(var(--radius-md) - 2px); }
