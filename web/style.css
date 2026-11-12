@@ -34,6 +34,20 @@ section { padding: var(--space-6) 0 0; margin-top: var(--space-6); border-top: 1
 .seg-sm { height: 32px; }
 .seg-sm .kds-tabs__trigger { padding: 0 var(--space-2); font-size: 12px; text-transform: uppercase; }
 
+/* Brand presets: cards with live thumbnails */
+.presetGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: var(--space-2); }
+.presetCard { display: flex; flex-direction: column; gap: var(--space-1_5); padding: 0; border: 0; background: none; cursor: pointer; text-align: left; color: var(--muted-foreground); }
+.presetCard .thumb { display: block; aspect-ratio: 16 / 10; border-radius: var(--radius-md); overflow: hidden; background: var(--muted);
+  box-shadow: 0 0 0 1px var(--sidebar-border); transition: box-shadow var(--duration-fast) var(--ease-out); }
+.presetCard .thumb svg { display: block; width: 100%; height: 100%; }
+.presetCard .name { font-size: 12px; line-height: 16px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.presetCard:hover .thumb { box-shadow: 0 0 0 1px var(--input); }
+.presetCard:hover .name { color: var(--foreground); }
+.presetCard.is-active .thumb { box-shadow: 0 0 0 2px var(--sidebar), 0 0 0 4px var(--primary); }
+.presetCard.is-active .name { color: var(--foreground); }
+.presetCard:focus-visible { outline: none; }
+.presetCard:focus-visible .thumb { box-shadow: 0 0 0 2px var(--sidebar), 0 0 0 4px color-mix(in oklch, var(--ring) 50%, transparent); }
+
 /* Aspect-ratio slider (Figma Temp 21:8904): label · track · proportion icon · ratio */
 .ratioRow { display: grid; grid-template-columns: auto 1fr 22px minmax(36px, auto); align-items: center; gap: var(--space-2) var(--space-3); min-height: 32px; }
 .ratioRow .kds-label { white-space: nowrap; }

@@ -118,9 +118,11 @@ function buildUI() {
     $('langs').appendChild(b);
   }
   // variants
+  // presets: cards with a live thumbnail of each brand variant in the current format
   for (const v of Object.keys(VARIANTS)) {
     const b = document.createElement('button');
-    b.className = 'kds-tabs__trigger'; b.dataset.v = v; b.dataset.t = 'v_' + v;
+    b.className = 'presetCard'; b.dataset.v = v; b.type = 'button';
+    b.innerHTML = `<span class="thumb"></span><span class="name" data-t="v_${v}"></span>`;
     b.addEventListener('click', () => { Object.assign(state, VARIANTS[v], { variant: v }); update(); });
     $('variants').appendChild(b);
   }
@@ -175,7 +177,12 @@ function buildUI() {
   $('copyBtn').addEventListener('click', copySVG);
   $('downloadBtn').addEventListener('click', downloadSVG);
   $('shareBtn').addEventListener('click', shareLink);
-  for (const id of ['resetTop']) $(id).addEventListener('click', () => { state = structuredClone(DEFAULTS); update(); toast(t('resetDone')); });
+  // Reset everything except the chosen preset and the format.
+  $('resetTop').addEventListener('click', () => {
+    const { variant, width, height } = state;
+    state = Object.assign(structuredClone(DEFAULTS), VARIANTS[variant] || {}, { variant, width, height });
+    update(); toast(t('resetDone'));
+  });
 
   setupDrag();
   setupResizer();
@@ -253,6 +260,7 @@ function render() {
   $('shiftOn').checked = shiftTarget != null ? shiftTarget === 1 : s.shift > 0;
   syncFormat();
   $('variants').querySelectorAll('button').forEach((b) => b.classList.toggle('is-active', b.dataset.v === s.variant));
+  renderThumbs();
   $('scaleMode').querySelectorAll('button').forEach((b) => b.classList.toggle('is-active', b.dataset.v === s.scaleMode));
   $('ringSw').querySelectorAll('.sw').forEach((b) => b.classList.toggle('on', b.dataset.c === s.ringColor.toUpperCase()));
   $('bgSw').querySelectorAll('.sw').forEach((b) => b.classList.toggle('on', b.dataset.c === s.bgColor.toUpperCase()));
@@ -312,6 +320,22 @@ function setupResizer() {
     if (d) { e.preventDefault(); w = setPanelW(w + d); }
   });
   window.addEventListener('resize', () => { w = setPanelW(w, false); });
+}
+
+// Preset thumbnails: brand defaults + variant, in the current format and colours. Rebuilt only when those change.
+let thumbKey = '';
+function renderThumbs() {
+  const s = state, key = [s.width, s.height, s.ringColor, s.bgColor, s.bgOn, s.grad.join()].join('|');
+  if (key === thumbKey) return;
+  thumbKey = key;
+  $('variants').querySelectorAll('.presetCard').forEach((b) => {
+    const ts = Object.assign(structuredClone(DEFAULTS), VARIANTS[b.dataset.v],
+      { width: s.width, height: s.height, ringColor: s.ringColor, bgColor: s.bgColor, bgOn: s.bgOn, grad: s.grad });
+    b.querySelector('.thumb').innerHTML = buildSVG(ts)
+      .replace('<svg ', '<svg preserveAspectRatio="xMidYMid slice" ')
+      .replace(/kp-(grad|clip)/g, `kpt-${b.dataset.v}-$1`)          // unique ids per thumbnail
+      .replace(/ id="(?!kpt-)[^"]*"/g, '');
+  });
 }
 
 // Format controls from state: fields (unless being typed in), slider stop, proportion icon, ratio text.

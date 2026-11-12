@@ -3,7 +3,7 @@ export const LANGS = ['ru', 'en', 'kk'];
 export const T = {
   ru: {
     title: 'Генератор паттерна Kolesa.kz',
-    variant: 'Вариант',
+    variant: 'Пресеты',
     v_main: 'Основной', v_cropped: 'Обрезанный', v_3d: '3D', v_broken: 'Разомкнутый', v_gradient: 'Градиент',
     format: 'Формат', ratio: 'Пропорции', width: 'Ширина', height: 'Высота', custom: 'Свой размер',
     p_landscape: 'Баннер 1920×1080', p_story: 'Сторис 1080×1920', p_square: 'Квадрат 1080×1080', p_billboard: 'Билборд 6000×3000', p_phone: 'Экран телефона 390×844',
@@ -20,7 +20,7 @@ export const T = {
   },
   en: {
     title: 'Kolesa.kz pattern generator',
-    variant: 'Variant',
+    variant: 'Presets',
     v_main: 'Main', v_cropped: 'Cropped', v_3d: '3D', v_broken: 'Open rings', v_gradient: 'Gradient',
     format: 'Format', ratio: 'Aspect ratio', width: 'Width', height: 'Height', custom: 'Custom size',
     p_landscape: 'Banner 1920×1080', p_story: 'Story 1080×1920', p_square: 'Square 1080×1080', p_billboard: 'Billboard 6000×3000', p_phone: 'Phone screen 390×844',
@@ -37,7 +37,7 @@ export const T = {
   },
   kk: {
     title: 'Kolesa.kz паттерн генераторы',
-    variant: 'Нұсқа',
+    variant: 'Пресеттер',
     v_main: 'Негізгі', v_cropped: 'Қиылған', v_3d: '3D', v_broken: 'Ашық сақиналар', v_gradient: 'Градиент',
     format: 'Формат', ratio: 'Пропорциялар', width: 'Ені', height: 'Биіктігі', custom: 'Өз өлшемі',
     p_landscape: 'Баннер 1920×1080', p_story: 'Сторис 1080×1920', p_square: 'Шаршы 1080×1080', p_billboard: 'Билборд 6000×3000', p_phone: 'Телефон экраны 390×844',
