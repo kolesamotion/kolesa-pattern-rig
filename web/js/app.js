@@ -254,13 +254,12 @@ function applyLang() {
   const tr = (x) => x.replace(/ЛКМ|СКМ|ПКМ|Колесо/g, (m) => mb[m] || m);
   const keyList = (rows) => rows.map(([k, ...alts]) =>
     `<li><span>${t(k)}</span><span>${alts.map((a) => `<kbd>${tr(a)}</kbd>`).join(` ${t('k_or')} `)}</span></li>`).join('');
-  $('camKeys').innerHTML = keyList([
-    ['k_orbit', 'ЛКМ'], ['k_pan', 'СКМ'], ['k_dolly', 'ПКМ', 'Колесо'], ['k_roll', `${mod} + ЛКМ ↔`, `${mod} + Колесо`], ['k_frame', 'H'],
-  ]);
+  // Common controls (both modes) in "Size & position"; Camera lists only what is 3D-specific.
   $('posKeys').innerHTML = keyList([
-    ['k_move', 'ЛКМ', 'СКМ'], ['k_move3d', 'СКМ'], ['k_scale2d', 'Колесо'],
-    ['k_roll', `${mod} + ЛКМ ↔`, `${mod} + Колесо`], ['k_rings', `${mod} + ЛКМ ↕`],
+    ['k_move', 'СКМ'], ['k_move2d', 'ЛКМ'], ['k_zoom', 'Колесо', 'ПКМ'],
+    ['k_roll', `${mod} + ЛКМ ↔`, `${mod} + Колесо`], ['k_rings', `${mod} + ЛКМ ↕`], ['k_frame', 'H'],
   ]);
+  $('camKeys').innerHTML = keyList([['k_orbit', 'ЛКМ']]) + `<li class="note">${t('k_same')}</li>`;
   renderUserPresets();
 }
 
@@ -456,23 +455,25 @@ function renderGhost() {
 }
 
 // Navigation. Both modes: Ctrl/Cmd+LMB drag — the first ~4 px pick the axis: horizontal = rotation Z, vertical = rings
-// (up = more); Ctrl/Cmd+wheel = rotation Z. 3D: LMB orbit, MMB pan, RMB drag / wheel dolly, H = frame. 2D: LMB / MMB move the pattern.
+// (up = more); Ctrl/Cmd+wheel = rotation Z; MMB move; RMB drag / wheel zoom (3D dolly, 2D scale); H = frame (2D: centre).
+// Mode-specific: LMB = orbit in 3D, move in 2D.
 function setupDrag() {
   const fr = $('frame');
   let start = null;
-  const typing = () => /INPUT|SELECT|TEXTAREA/.test(document.activeElement?.tagName || '');
+  const typing = () => { const a = document.activeElement; return !!a && (/SELECT|TEXTAREA/.test(a.tagName) || (a.tagName === 'INPUT' && /^(text|number|search|email|url)$/.test(a.type)) || a.isContentEditable); };   // switches / sliders don't block H
   window.addEventListener('keydown', (e) => {
     if (typing() || e.metaKey || e.ctrlKey) return;
-    if ((e.key === 'h' || e.key === 'H' || e.code === 'KeyH') && state.threeD) { frameAll(); e.preventDefault(); }
+    if (e.key === 'h' || e.key === 'H' || e.code === 'KeyH') { frameAll(); e.preventDefault(); }   // both modes
   });
-  fr.addEventListener('contextmenu', (e) => { if (state.threeD || e.ctrlKey) e.preventDefault(); });
+  fr.addEventListener('contextmenu', (e) => e.preventDefault());   // RMB drag is used in both modes
   fr.addEventListener('auxclick', (e) => e.preventDefault());
   fr.addEventListener('pointerdown', (e) => {
-    // 3D: LMB orbit, MMB pan, RMB dolly. 2D: LMB and MMB move the pattern.
+    // Same in both modes: MMB move, RMB drag zoom (3D dolly / 2D scale), Ctrl+LMB rotation/rings.
+    // Mode-specific: LMB = orbit in 3D, move in 2D.
     let mode;
     if (e.button === 0 && (e.ctrlKey || e.metaKey)) mode = 'ctrl';   // both modes: axis decided on first move
     else if (state.threeD) mode = ['orbit', 'pan', 'dolly'][e.button];
-    else mode = e.button === 0 || e.button === 1 ? 'move' : null;
+    else mode = ['move', 'move', 'zoom'][e.button];
     if (!mode) return;
     e.preventDefault();
     start = { x: e.clientX, y: e.clientY, mode, s: { ...state } };
@@ -505,6 +506,8 @@ function setupDrag() {
       state.panY = s0.panY + dy * toLocal;
     } else if (start.mode === 'dolly') {
       state.camDist = s0.camDist * Math.exp(-(dx - dy) * 0.004);
+    } else if (start.mode === 'zoom') {                        // 2D twin of dolly: right / up = bigger
+      state.scale = s0.scale * Math.exp((dx - dy) * 0.004);
     } else {
       state.cx = s0.cx + dx / fr.clientWidth;
       state.cy = s0.cy + dy / fr.clientHeight;
@@ -523,7 +526,9 @@ function setupDrag() {
 }
 
 // H: keep the angle, reset pan and dolly so the pattern sits in frame as at the start.
+// 2D: centre the pattern (same as the "Centre" button).
 function frameAll() {
+  if (!state.threeD) { state.cx = 0.5; state.cy = 0.5; update(); return; }
   state.panX = 0; state.panY = 0; state.camDist = DEFAULTS.camDist;
   update();
 }

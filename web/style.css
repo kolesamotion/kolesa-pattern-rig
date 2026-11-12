@@ -157,7 +157,7 @@ body.resizing .ghost { visibility: hidden; }   /* frame is only CSS-scaled while
 .frame.drag { cursor: grabbing; }
 .frame.c4d-orbit { cursor: move; }
 .frame.c4d-pan { cursor: all-scroll; }
-.frame.c4d-dolly { cursor: ns-resize; }
+.frame.c4d-dolly, .frame.c4d-zoom { cursor: ns-resize; }
 .frame.c4d-roll { cursor: ew-resize; }
 .frame.c4d-rings { cursor: ns-resize; }
 .frame.c4d-ctrl { cursor: move; }
@@ -236,3 +236,5 @@ body.resizing .ghost { visibility: hidden; }   /* frame is only CSS-scaled while
 .helpTip .tip .keys li > span:first-child { opacity: .75; }
 .helpTip .tip .keys kbd { color: inherit; background: rgb(255 255 255 / 0.15); border: 0; }
 :is([data-theme="dark"], .dark) .helpTip .tip .keys kbd { background: rgb(29 33 41 / 0.1); }
+.helpTip .tip .keys li.note { display: block; margin-top: 4px; padding-top: 6px; border-top: 1px solid rgb(255 255 255 / 0.12); opacity: .75; }
+:is([data-theme="dark"], .dark) .helpTip .tip .keys li.note { border-top-color: rgb(29 33 41 / 0.12); }
