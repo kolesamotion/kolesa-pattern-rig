@@ -167,6 +167,7 @@ function buildUI() {
   for (const id of ['resetTop']) $(id).addEventListener('click', () => { state = structuredClone(DEFAULTS); update(); toast(t('resetDone')); });
 
   setupDrag();
+  setupResizer();
   new ResizeObserver(fitFrame).observe($('stage'));
 }
 
@@ -232,6 +233,36 @@ function update() {
   fitFrame();
   clearTimeout(hashTimer);
   hashTimer = setTimeout(() => history.replaceState(null, '', '#' + toQuery(state)), 250);
+}
+
+// Panel width: drag the panel's left edge (double-click = default), arrows when focused. Saved per viewer.
+const PANEL_W = [300, 720, 380];
+function setPanelW(w, save = true) {
+  const max = Math.min(PANEL_W[1], window.innerWidth - 320);
+  w = Math.round(Math.max(PANEL_W[0], Math.min(max, w)));
+  document.querySelector('.app').style.setProperty('--panel-w', w + 'px');
+  if (save) store.set('kp.panelW', w);
+  return w;
+}
+function setupResizer() {
+  const el = $('resizer');
+  let w = setPanelW(store.get('kp.panelW', PANEL_W[2]), false);
+  el.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    e.preventDefault(); el.setPointerCapture(e.pointerId);
+    el.classList.add('on'); document.body.classList.add('resizing');
+    const x0 = e.clientX, w0 = w;
+    const move = (ev) => { w = setPanelW(w0 + (x0 - ev.clientX)); };
+    const up = () => { el.classList.remove('on'); document.body.classList.remove('resizing');
+      el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up); };
+    el.addEventListener('pointermove', move); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+  });
+  el.addEventListener('dblclick', () => { w = setPanelW(PANEL_W[2]); });
+  el.addEventListener('keydown', (e) => {
+    const d = e.key === 'ArrowLeft' ? 20 : e.key === 'ArrowRight' ? -20 : 0;
+    if (d) { e.preventDefault(); w = setPanelW(w + d); }
+  });
+  window.addEventListener('resize', () => { w = setPanelW(w, false); });
 }
 
 function fitFrame() {
