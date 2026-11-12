@@ -3,15 +3,15 @@ html, body { height: 100%; }
 button, input, select { font: inherit; color: inherit; }
 .kds-btn i, .kds-btn .kds-icon { display: inline-flex; }
 
-.app { --panel-w: 380px; position: relative; display: grid; grid-template-columns: 1fr var(--panel-w); height: 100vh; }
+.app { --panel-w: 380px; display: grid; grid-template-columns: 1fr var(--panel-w); height: 100vh; }
 /* Panel width handle: sits on the panel's left border */
-.resizer { position: absolute; top: 0; bottom: 0; right: calc(var(--panel-w) - 4px); width: 8px; cursor: col-resize; z-index: 5; touch-action: none; }
-.resizer::after { content: ''; position: absolute; top: 0; bottom: 0; left: 3px; width: 2px; background: transparent; transition: background var(--duration-fast) var(--ease-out); }
+/* Inside .stage at its right edge, so it overlaps no composited layer (the panel scroller) and adds no repaint. */
+.resizer { position: absolute; top: 0; bottom: 0; right: 0; width: 6px; cursor: col-resize; touch-action: none; }
+.resizer::after { content: ''; position: absolute; top: 0; bottom: 0; right: 0; width: 2px; background: transparent; transition: background var(--duration-fast) var(--ease-out); }
 .resizer:hover::after, .resizer.on::after, .resizer:focus-visible::after { background: var(--primary); }
 .resizer:focus-visible { outline: none; }
 body.resizing { cursor: col-resize; user-select: none; }
 body.resizing .frame { pointer-events: none; will-change: transform; }
-.panel { contain: layout paint; }
 
 /* Panel — sidebar tokens */
 .panel { order: 2; background: var(--sidebar); color: var(--sidebar-foreground); border-left: 1px solid var(--sidebar-border); overflow-y: auto; padding: var(--space-6); }
