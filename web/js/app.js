@@ -154,6 +154,7 @@ function buildUI() {
   for (const k of BOOL_KEYS) $(k).addEventListener('change', (e) => { state[k] = e.target.checked; update(); });
   $('linkTS').addEventListener('change', (e) => { if (e.target.checked) state.tsRatio = state.thickness / state.step; update(); });
   $('scaleMode').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => switchScaleMode(b.dataset.v)));
+  $('addPreset').addEventListener('click', addUserPreset);
   $('resetGeom').addEventListener('click', () => {
     for (const k of GEOM_KEYS) state[k] = DEFAULTS[k];
     update(); toast(t('resetGeomDone'));
@@ -174,14 +175,14 @@ function buildUI() {
   });
   ['g0', 'g1', 'g2'].forEach((id, i) => $(id).addEventListener('input', (e) => { state.grad[i] = e.target.value.toUpperCase(); update(); }));
 
-  $('savePreset').addEventListener('click', savePreset);
   $('copyBtn').addEventListener('click', copySVG);
   $('downloadBtn').addEventListener('click', downloadSVG);
   $('shareBtn').addEventListener('click', shareLink);
   // Reset everything except the chosen preset and the format.
   $('resetTop').addEventListener('click', () => {
     const { variant, width, height } = state;
-    state = Object.assign(structuredClone(DEFAULTS), VARIANTS[variant] || {}, { variant, width, height });
+    const up = userPreset(variant);
+    state = Object.assign(up ? fromQuery(up.q) : Object.assign(structuredClone(DEFAULTS), VARIANTS[variant] || {}), { variant, width, height });
     update(); toast(t('resetDone'));
   });
 
@@ -210,7 +211,6 @@ function applyLang() {
   document.documentElement.lang = lang === 'kk' ? 'kk' : lang;
   document.querySelectorAll('[data-t]').forEach((el) => { el.textContent = t(el.dataset.t); });
   document.querySelectorAll('[data-t-aria]').forEach((el) => { el.setAttribute('aria-label', t(el.dataset.tAria)); el.title = t(el.dataset.tAria); });
-  $('presetName').placeholder = t('presetName');
   const mod = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl';
   $('copyHint').innerHTML = `<kbd>${mod} + C</kbd> ${t('k_copyAny')}`;
   document.title = t('title');
@@ -223,7 +223,7 @@ function applyLang() {
   const tr = (x) => x.replace(/ЛКМ|СКМ|ПКМ/g, (m) => mb[m] || m);
   $('camKeys').innerHTML = rows.map(([k, a, b]) =>
     `<li><span>${t(k)}</span><span><kbd>${tr(a)}</kbd>${b ? ` ${t('k_or')} <kbd>${tr(b)}</kbd>` : ''}</span></li>`).join('');
-  renderPresets();
+  renderUserPresets();
 }
 
 // ---------- render ----------
@@ -280,7 +280,7 @@ function render() {
   $('tsRatioText').textContent = s.linkTS ? `${Math.round(s.tsRatio * 100)} %` : '';
   $('shiftOn').checked = shiftTarget != null ? shiftTarget === 1 : s.shift > 0;
   syncFormat();
-  $('variants').querySelectorAll('button').forEach((b) => b.classList.toggle('is-active', b.dataset.v === s.variant));
+  $('variants').querySelectorAll('.presetCard').forEach((b) => b.classList.toggle('is-active', b.dataset.v === s.variant));
   renderThumbs();
   $('scaleMode').querySelectorAll('button').forEach((b) => b.classList.toggle('is-active', b.dataset.v === s.scaleMode));
   $('ringSw').querySelectorAll('.sw').forEach((b) => b.classList.toggle('on', b.dataset.c === s.ringColor.toUpperCase()));
@@ -351,11 +351,13 @@ function renderThumbs() {
   if (key === thumbKey) return;
   thumbKey = key;
   $('variants').querySelectorAll('.presetCard').forEach((b) => {
-    const ts = Object.assign(structuredClone(DEFAULTS), VARIANTS[b.dataset.v],
-      { width: s.width, height: s.height, ringColor: s.ringColor, bgColor: s.bgColor, bgOn: s.bgOn, grad: s.grad });
+    const up = userPreset(b.dataset.v);
+    const ts = up ? Object.assign(fromQuery(up.q), { width: s.width, height: s.height })   // user preset: its own look, current format
+      : Object.assign(structuredClone(DEFAULTS), VARIANTS[b.dataset.v],
+        { width: s.width, height: s.height, ringColor: s.ringColor, bgColor: s.bgColor, bgOn: s.bgOn, grad: s.grad });
     b.querySelector('.thumb').innerHTML = buildSVG(ts)
       .replace('<svg ', '<svg preserveAspectRatio="xMidYMid slice" ')
-      .replace(/kp-(grad|clip)/g, `kpt-${b.dataset.v}-$1`)          // unique ids per thumbnail
+      .replace(/kp-(grad|clip)/g, `kpt-${b.dataset.v.replace(':', '-')}-$1`)          // unique ids per thumbnail
       .replace(/ id="(?!kpt-)[^"]*"/g, '');
   });
 }
@@ -475,9 +477,16 @@ function frameAll() {
 }
 
 // ---------- export ----------
-function toast(msg) {
-  const el = $('toast'); el.textContent = msg; el.classList.add('show');
-  clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), 2600);
+function toast(msg, actionLabel, onAction) {
+  const el = $('toast'); el.textContent = msg;
+  el.classList.toggle('hasAction', !!actionLabel);
+  if (actionLabel) {
+    const b = document.createElement('button'); b.className = 'act'; b.type = 'button'; b.textContent = actionLabel;
+    b.addEventListener('click', () => { el.classList.remove('show'); onAction(); });
+    el.appendChild(b);
+  }
+  el.classList.add('show');
+  clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), actionLabel ? 5000 : 2600);
 }
 async function copyText(txt) {
   try { await navigator.clipboard.writeText(txt); return true; } catch {
@@ -500,28 +509,80 @@ function downloadSVG() {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
-// ---------- presets ----------
-function renderPresets() {
-  const list = $('presetList'); list.innerHTML = '';
-  const presets = store.get('kp.presets', []);
-  if (!presets.length) { const li = document.createElement('li'); li.className = 'empty'; li.textContent = t('noPresets'); list.appendChild(li); return; }
-  presets.forEach((p, i) => {
-    const li = document.createElement('li');
-    const a = document.createElement('button'); a.className = 'kds-btn kds-btn--ghost kds-btn--size-sm apply'; a.textContent = p.name;
-    a.addEventListener('click', () => { state = fromQuery(p.q); update(); });
-    const d = document.createElement('button'); d.className = 'kds-btn kds-btn--ghost kds-btn--size-icon-sm';
-    d.innerHTML = ICONS.trash; d.setAttribute('aria-label', t('del')); d.title = t('del');
-    d.addEventListener('click', () => { const ps = store.get('kp.presets', []); ps.splice(i, 1); store.set('kp.presets', ps); renderPresets(); });
-    li.append(a, d); list.appendChild(li);
-  });
+// ---------- user presets ----------
+// Flow: "+" in the Presets header saves the current look as a card at the end of the grid and opens its name
+// for editing (Enter/blur = keep, Esc = default name). Click a card = apply (format is kept, like brand presets).
+// Double-click the name = rename. × on hover = delete, with Undo in the toast. Stored per browser (localStorage).
+const UP_KEY = 'kp.presets';
+function userPresets() {
+  const ps = store.get(UP_KEY, []);
+  let dirty = false;
+  ps.forEach((p) => { if (!p.id) { p.id = Math.random().toString(36).slice(2, 9); dirty = true; } });   // migrate old entries
+  if (dirty) store.set(UP_KEY, ps);
+  return ps;
 }
-function savePreset() {
-  const name = $('presetName').value.trim() || `${t('v_' + state.variant)} ${state.width}×${state.height}`;
-  const ps = store.get('kp.presets', []);
-  ps.unshift({ name, q: toQuery(state) });
-  store.set('kp.presets', ps.slice(0, 50));
-  $('presetName').value = '';
-  renderPresets(); toast(t('saved'));
+function userPreset(v) { return typeof v === 'string' && v.startsWith('u:') ? userPresets().find((p) => 'u:' + p.id === v) : null; }
+
+function renderUserPresets() {
+  const grid = $('variants');
+  grid.querySelectorAll('.presetCard.user').forEach((c) => c.remove());
+  for (const p of userPresets()) {
+    const b = document.createElement('div');
+    b.className = 'presetCard user'; b.dataset.v = 'u:' + p.id; b.tabIndex = 0; b.setAttribute('role', 'button');
+    b.innerHTML = `<span class="thumb"></span><span class="name"></span><button class="del" type="button"></button>`;
+    b.querySelector('.name').textContent = p.name; b.querySelector('.name').title = t('rename');
+    const del = b.querySelector('.del'); del.innerHTML = ICONS.close; del.setAttribute('aria-label', t('del')); del.title = t('del');
+    const apply = () => { const { width, height } = state; state = Object.assign(fromQuery(p.q), { variant: 'u:' + p.id, width, height }); update(); };
+    b.addEventListener('click', (e) => { if (!e.target.closest('.del, .nameEdit')) apply(); });
+    b.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === b) { e.preventDefault(); apply(); } });
+    b.querySelector('.name').addEventListener('dblclick', (e) => { e.stopPropagation(); renameUserPreset(b, p.id); });
+    del.addEventListener('click', (e) => { e.stopPropagation(); deleteUserPreset(p.id); });
+    grid.appendChild(b);
+  }
+  thumbKey = ''; renderThumbs();
+  grid.querySelectorAll('.presetCard').forEach((c) => c.classList.toggle('is-active', c.dataset.v === state.variant));
+}
+
+function addUserPreset() {
+  const ps = userPresets();
+  const id = Math.random().toString(36).slice(2, 9);
+  let n = ps.length + 1; while (ps.some((p) => p.name === `${t('myPreset')} ${n}`)) n++;
+  state.variant = 'u:' + id;
+  ps.push({ id, name: `${t('myPreset')} ${n}`, q: toQuery(state) });
+  store.set(UP_KEY, ps.slice(-50));
+  renderUserPresets(); update();
+  const card = $('variants').querySelector(`[data-v="u:${id}"]`);
+  if (card) { card.classList.add('fresh'); card.scrollIntoView({ block: 'nearest' }); renameUserPreset(card, id); }
+  toast(t('saved'));
+}
+
+function renameUserPreset(card, id) {
+  const name = card.querySelector('.name'), old = name.textContent;
+  const inp = document.createElement('input');
+  inp.className = 'kds-input nameEdit'; inp.value = old; inp.maxLength = 40;
+  name.replaceWith(inp); inp.focus(); inp.select();
+  let done = false;
+  const finish = (keep) => {
+    if (done) return; done = true;
+    const v = keep ? inp.value.trim() || old : old;
+    const ps = userPresets(), p = ps.find((x) => x.id === id);
+    if (p) { p.name = v; store.set(UP_KEY, ps); }
+    name.textContent = v; inp.replaceWith(name);
+  };
+  inp.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') finish(true); if (e.key === 'Escape') finish(false); });
+  inp.addEventListener('blur', () => finish(true));
+  inp.addEventListener('click', (e) => e.stopPropagation());
+}
+
+function deleteUserPreset(id) {
+  const ps = userPresets(), i = ps.findIndex((p) => p.id === id);
+  if (i < 0) return;
+  const [gone] = ps.splice(i, 1);
+  store.set(UP_KEY, ps); renderUserPresets(); update();
+  toast(t('deleted'), t('undo'), () => {
+    const cur = userPresets(); cur.splice(Math.min(i, cur.length), 0, gone);
+    store.set(UP_KEY, cur); renderUserPresets(); update();
+  });
 }
 
 // ---------- init ----------

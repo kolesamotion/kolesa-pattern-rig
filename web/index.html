@@ -24,7 +24,9 @@
     <button class="kds-btn kds-btn--outline kds-btn--size-sm wide" id="resetTop"><i data-icon="update"></i><span data-t="resetAll"></span></button>
 
     <section>
-      <h2 data-t="variant"></h2>
+      <div class="secHead"><h2 data-t="variant"></h2>
+        <button class="kds-btn kds-btn--ghost kds-btn--size-icon-sm" id="addPreset" data-t-aria="addPreset"><i data-icon="add-plus"></i></button>
+      </div>
       <div class="presetGrid" id="variants"></div>
     </section>
 
@@ -84,15 +86,6 @@
         <div class="gradStops"><input type="color" id="g0"><input type="color" id="g1"><input type="color" id="g2"></div>
         <div id="angleSlider"></div>
       </div>
-    </section>
-
-    <section>
-      <h2 data-t="presets"></h2>
-      <div class="presetSave">
-        <input class="kds-input" type="text" id="presetName">
-        <button class="kds-btn kds-btn--outline kds-btn--size-default" id="savePreset"><i data-icon="add-plus"></i><span data-t="save"></span></button>
-      </div>
-      <ul id="presetList" class="presetList"></ul>
     </section>
 
     <section class="exportSec">

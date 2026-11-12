@@ -46,6 +46,17 @@ section { padding: var(--space-6) 0 0; margin-top: var(--space-6); border-top: 1
 .presetCard.is-active .thumb { box-shadow: 0 0 0 2px var(--sidebar), 0 0 0 4px var(--primary); }
 .presetCard.is-active .name { color: var(--foreground); }
 .presetCard:focus-visible { outline: none; }
+.presetCard { position: relative; }
+/* User presets: delete on hover, rename in place */
+.presetCard .del { position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%;
+  background: rgb(29 33 41 / 0.7); color: #fff; cursor: pointer; opacity: 0; transition: opacity var(--duration-fast) var(--ease-out); }
+.presetCard .del svg { width: 12px; height: 12px; }
+.presetCard:hover .del, .presetCard:focus-within .del { opacity: 1; }
+.presetCard .del:hover { background: var(--destructive, #e5484d); }
+.presetCard .nameEdit { height: 20px; padding: 0 4px; margin: -2px 0; font-size: 12px; border-radius: var(--radius-sm); }
+.presetCard.fresh .thumb { animation: kp-pop var(--duration-base, 200ms) var(--ease-out); }
+@keyframes kp-pop { from { transform: scale(0.92); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .presetCard.fresh .thumb { animation: none; } }
 .presetCard:focus-visible .thumb { box-shadow: 0 0 0 2px var(--sidebar), 0 0 0 4px color-mix(in oklch, var(--ring) 50%, transparent); }
 
 /* Aspect-ratio slider (Figma Temp 21:8904): label · track · proportion icon · ratio */
@@ -115,11 +126,6 @@ input[type=color] { width: 32px; height: 32px; border: 1px solid var(--input); b
 .gradStops { display: flex; gap: var(--space-1_5); margin: var(--space-3) 0; }
 
 /* Presets */
-.presetSave { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); }
-.presetList { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
-.presetList li { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); padding: 2px 0; }
-.presetList li .apply { flex: 1; justify-content: flex-start; }
-.presetList li.empty { color: var(--muted-foreground); font-size: 12px; line-height: 16px; }
 
 .exportRow { display: flex; gap: var(--space-2); }
 .exportRow #copyBtn { flex: 1; min-width: 0; }
@@ -158,6 +164,10 @@ body.resizing .ghost { visibility: hidden; }   /* frame is only CSS-scaled while
 .toast { position: fixed; left: 50%; bottom: var(--space-6); transform: translate(-50%, 8px); background: var(--brand-neutral); color: var(--white); padding: var(--space-2_5) var(--space-4); border-radius: var(--radius-lg); opacity: 0; transition: opacity var(--duration-base) var(--ease-out), transform var(--duration-base) var(--ease-out); pointer-events: none; z-index: 10; }
 :is([data-theme="dark"], .dark) .toast { background: var(--white); color: var(--brand-neutral); }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast.show.hasAction { pointer-events: auto; }
+.toast { display: flex; align-items: center; gap: var(--space-3); }
+.toast .act { border: 0; background: none; padding: 0; font: inherit; font-weight: 600; color: var(--primary-on-dark, #61acff); cursor: pointer; }
+:is([data-theme="dark"], .dark) .toast .act { color: var(--primary); }
 
 @media (max-width: 760px) {
   .app { grid-template-columns: 1fr; grid-template-rows: 45vh auto; height: auto; }
