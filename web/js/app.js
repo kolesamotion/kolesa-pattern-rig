@@ -127,10 +127,40 @@ function buildUI() {
     $('variants').appendChild(b);
   }
   // format: aspect-ratio slider keeps the long side; width/height fields update live both ways
-  $('ratio').addEventListener('input', (e) => {
-    const [a, b] = RATIOS[+e.target.value];
-    const L = Math.max(sizeTarget ? sizeTarget[0] : state.width, sizeTarget ? sizeTarget[1] : state.height);
-    animateSize(a >= b ? [L, Math.round(L * b / a)] : [Math.round(L * a / b), L]);
+  // Dragging is free: the size follows the thumb continuously (ratio interpolated between the stops in log space).
+  // On release, keyboard or wheel it snaps to the nearest stop with the 150 ms ease-in-out animation.
+  const rr = $('ratio');
+  let ratioDrag = null;   // { L } while the pointer is down
+  const sizeAt = (x, L) => {
+    const i = Math.min(RATIOS.length - 2, Math.floor(x)), f = x - i;
+    const la = Math.log(RATIOS[i][0] / RATIOS[i][1]), lb = Math.log(RATIOS[i + 1][0] / RATIOS[i + 1][1]);
+    const r = Math.exp(la + (lb - la) * f);
+    return r >= 1 ? [L, Math.max(16, Math.round(L / r))] : [Math.max(16, Math.round(L * r)), L];
+  };
+  const longSide = () => Math.max(...(sizeTarget || [state.width, state.height]));
+  const snapRatio = () => {
+    const from = +rr.value, to = Math.round(from);
+    const [a, b] = RATIOS[to], L = ratioDrag ? ratioDrag.L : longSide();
+    ratioDrag = null;
+    const target = a >= b ? [L, Math.round(L * b / a)] : [Math.round(L * a / b), L];
+    if (from === to && target[0] === state.width && target[1] === state.height) { sizeTarget = null; update(); return; }
+    animateSize(target, [from, to]);
+  };
+  rr.addEventListener('pointerdown', () => { const L = longSide(); cancelAnimationFrame(sizeRaf); sizeRaf = 0; sizeTarget = null; ratioDrag = { L }; });
+  rr.addEventListener('input', () => {
+    if (ratioDrag) { [state.width, state.height] = sizeAt(+rr.value, ratioDrag.L); sizeTarget = [state.width, state.height]; paintRange(rr); update(); }   // sizeTarget set = thumbnails wait until release
+    else snapRatio();   // wheel / programmatic
+  });
+  rr.addEventListener('change', () => { if (ratioDrag) snapRatio(); });
+  addEventListener('pointerup', () => { if (ratioDrag) snapRatio(); });
+  addEventListener('pointercancel', () => { if (ratioDrag) snapRatio(); });
+  rr.addEventListener('keydown', (e) => {
+    const d = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1 }[e.key];
+    if (d == null && e.key !== 'Home' && e.key !== 'End') return;
+    e.preventDefault();
+    const cur = Math.round(+rr.value);
+    rr.value = e.key === 'Home' ? 0 : e.key === 'End' ? RATIOS.length - 1 : Math.min(RATIOS.length - 1, Math.max(0, cur + d));
+    snapRatio();
   });
   for (const k of ['width', 'height']) {
     $(k).addEventListener('input', (e) => {
@@ -230,7 +260,7 @@ function applyLang() {
 // Aspect-ratio change is animated like Shift (ease-in-out 150 ms). Preset thumbnails are skipped
 // while it runs (they're the expensive part of a size change) and rebuilt once at the end.
 let sizeRaf = 0, sizeTarget = null;
-function animateSize([tw, th]) {
+function animateSize([tw, th], slide) {
   cancelAnimationFrame(sizeRaf);
   const fw = state.width, fh = state.height, t0 = performance.now(), D = 150;
   const ease = (t) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);
@@ -241,6 +271,7 @@ function animateSize([tw, th]) {
     const t = Math.min(1, (now - t0) / D), k = ease(t);
     state.width = lw = Math.round(fw + (tw - fw) * k);
     state.height = lh = Math.round(fh + (th - fh) * k);
+    if (slide) { $('ratio').value = slide[0] + (slide[1] - slide[0]) * k; }
     if (t < 1) { sizeRaf = requestAnimationFrame(step); render(); }
     else { sizeRaf = 0; sizeTarget = null; update(); }
   };
@@ -376,10 +407,10 @@ function syncFormat() {
   const r = fw / fh;
   let best = 0;
   RATIOS.forEach(([a, b], i) => { if (Math.abs(Math.log(a / b / r)) < Math.abs(Math.log(RATIOS[best][0] / RATIOS[best][1] / r))) best = i; });
-  if (ae !== $('ratio')) $('ratio').value = best;
+  if (ae !== $('ratio') && !sizeRaf) $('ratio').value = best;
   paintRange($('ratio'));
   const g = gcd(fw, fh), a = fw / g, b = fh / g;
-  $('ratioText').textContent = a <= 99 && b <= 99 ? `${a}:${b}` : r >= 1 ? `${+r.toFixed(2)}:1` : `1:${+(1 / r).toFixed(2)}`;
+  $('ratioText').textContent = a <= 20 && b <= 20 ? `${a}:${b}` : r >= 1 ? `${+r.toFixed(2)}:1` : `1:${+(1 / r).toFixed(2)}`;
   const i = $('ratioIcon').firstElementChild, ri = s.width / s.height;   // icon follows the live size
   i.style.width = (ri >= 1 ? 22 : Math.max(5, 22 * ri)) + 'px';
   i.style.height = (ri >= 1 ? Math.max(5, 22 / ri) : 22) + 'px';
