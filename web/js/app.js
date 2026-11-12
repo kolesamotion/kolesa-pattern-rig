@@ -449,7 +449,8 @@ function renderGhost() {
   $('ghost').innerHTML = buildGhostSVG(state, -left / k, -top / k, sw / k, sh / k);
 }
 
-// Navigation. Both modes: Ctrl/Cmd+LMB (or +wheel) rotation Z. 3D: LMB orbit, MMB pan, RMB drag / wheel dolly, H = frame. 2D: LMB / MMB move the pattern.
+// Navigation. Both modes: Ctrl/Cmd+LMB drag — the first ~4 px pick the axis: horizontal = rotation Z, vertical = rings
+// (up = more); Ctrl/Cmd+wheel = rotation Z. 3D: LMB orbit, MMB pan, RMB drag / wheel dolly, H = frame. 2D: LMB / MMB move the pattern.
 function setupDrag() {
   const fr = $('frame');
   let start = null;
@@ -463,7 +464,7 @@ function setupDrag() {
   fr.addEventListener('pointerdown', (e) => {
     // 3D: LMB orbit, MMB pan, RMB dolly. 2D: LMB and MMB move the pattern.
     let mode;
-    if (e.button === 0 && (e.ctrlKey || e.metaKey)) mode = 'roll';   // both modes: rotation Z
+    if (e.button === 0 && (e.ctrlKey || e.metaKey)) mode = 'ctrl';   // both modes: axis decided on first move
     else if (state.threeD) mode = ['orbit', 'pan', 'dolly'][e.button];
     else mode = e.button === 0 || e.button === 1 ? 'move' : null;
     if (!mode) return;
@@ -477,7 +478,18 @@ function setupDrag() {
     const px = state.width / fr.clientWidth;               // screen px -> frame px
     const toLocal = px / scaleFactor(state);               // screen px -> pattern units
     const wrap = (a) => ((a + 540) % 360) - 180;
-    if (start.mode === 'roll') {
+    if (start.mode === 'ctrl') {
+      if (Math.hypot(dx, dy) < 4) return;
+      start.mode = Math.abs(dx) >= Math.abs(dy) ? 'roll' : 'rings';
+      start.x = e.clientX; start.y = e.clientY;                 // count from the lock point, no jump
+      fr.classList.remove('c4d-ctrl'); fr.classList.add('c4d-' + start.mode);
+      return;
+    }
+    if (start.mode === 'rings') {
+      const n = Math.round(s0.rings - dy / 16);                 // 16 px per ring, up = more
+      if (n === state.rings) return;
+      state.rings = n;
+    } else if (start.mode === 'roll') {
       state.rotZ = wrap(s0.rotZ + dx * 0.4);
     } else if (start.mode === 'orbit') {
       state.rotY = wrap(s0.rotY + dx * 0.4);
