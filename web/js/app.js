@@ -17,7 +17,7 @@ const GRADS = [
   { c: ['#C2DEFF', '#61ACFF', '#0077FF'], a: 90 },   // brand gradient 3
 ];
 const UNITS = { shift: '', step: 'px', thickness: 'px', gap: '°', twist: '°', r0: 'px', draw: '%', dropout: '%', scale: '%', gradAngle: '°', rotX: '°', rotY: '°', rotZ: '°', camDist: 'px' };
-const NUM_KEYS = ['rings', 'shift', 'step', 'thickness', 'gap', 'twist', 'r0', 'skip', 'draw', 'dropout', 'seed', 'gradAngle', 'width', 'height', 'cx', 'cy', 'scale', 'rotX', 'rotY', 'rotZ', 'camDist', 'panX', 'panY', 'tsRatio'];
+const NUM_KEYS = ['rings', 'shift', 'step', 'thickness', 'gap', 'twist', 'r0', 'skip', 'draw', 'dropout', 'seed', 'gradAngle', 'width', 'height', 'cx', 'cy', 'scale', 'rotX', 'rotY', 'rotZ', 'camDist', 'panX', 'panY', 'tsRatio', 'ringOpacity', 'bgOpacity'];
 // Geometry section (incl. «Дополнительно»); 3D mode and camera are kept.
 const GEOM_KEYS = ['rings', 'shift', 'step', 'thickness', 'linkTS', 'tsRatio', 'gap', 'twist', 'variation', 'r0', 'skip', 'draw', 'dropout', 'seed', 'core'];
 const BOOL_KEYS = ['core', 'variation', 'threeD', 'gradient', 'bgOn', 'linkTS'];
@@ -41,6 +41,7 @@ function toQuery(s) {
   for (const k of BOOL_KEYS) p.set(k, s[k] ? '1' : '0');
   for (const k of STR_KEYS) p.set(k, s[k]);
   p.set('grad', s.grad.join(','));
+  if (s.gradOpacity.some((a) => a !== 100)) p.set('gradA', s.gradOpacity.join(','));
   return p.toString();
 }
 function fromQuery(q) {
@@ -50,6 +51,7 @@ function fromQuery(q) {
   for (const k of BOOL_KEYS) if (p.has(k)) s[k] = p.get(k) === '1';
   for (const k of STR_KEYS) if (p.has(k)) s[k] = p.get(k);
   if (p.has('grad')) { const g = p.get('grad').split(','); if (g.length === 3) s.grad = g; }
+  if (p.has('gradA')) { const g = p.get('gradA').split(',').map(Number); if (g.length === 3 && g.every((v) => v >= 0 && v <= 100)) s.gradOpacity = g; }
   return clampAll(s);
 }
 function clampAll(s) {
@@ -379,14 +381,14 @@ function setupResizer() {
 let thumbKey = '';
 function renderThumbs() {
   if (sizeTarget) return;   // aspect-ratio animation in progress
-  const s = state, key = [s.width, s.height, s.ringColor, s.bgColor, s.bgOn, s.grad.join()].join('|');
+  const s = state, key = [s.width, s.height, s.ringColor, s.bgColor, s.bgOn, s.grad.join(), s.ringOpacity, s.bgOpacity, s.gradOpacity.join()].join('|');
   if (key === thumbKey) return;
   thumbKey = key;
   $('variants').querySelectorAll('.presetCard').forEach((b) => {
     const up = userPreset(b.dataset.v);
     const ts = up ? Object.assign(fromQuery(up.q), { width: s.width, height: s.height })   // user preset: its own look, current format
       : Object.assign(structuredClone(DEFAULTS), VARIANTS[b.dataset.v],
-        { width: s.width, height: s.height, ringColor: s.ringColor, bgColor: s.bgColor, bgOn: s.bgOn, grad: s.grad });
+        { width: s.width, height: s.height, ringColor: s.ringColor, bgColor: s.bgColor, bgOn: s.bgOn, grad: s.grad, ringOpacity: s.ringOpacity, bgOpacity: s.bgOpacity, gradOpacity: s.gradOpacity });
     b.querySelector('.thumb').innerHTML = buildSVG(ts)
       .replace('<svg ', '<svg preserveAspectRatio="xMidYMid slice" ')
       .replace(/kp-(grad|clip)/g, `kpt-${b.dataset.v.replace(':', '-')}-$1`)          // unique ids per thumbnail
@@ -552,6 +554,20 @@ function setupColorFields() {
     hex.className = 'hex'; hex.type = 'text'; hex.maxLength = 7; hex.spellcheck = false; hex.autocomplete = 'off';
     hex.setAttribute('aria-label', 'HEX');
     f.appendChild(hex); col._hex = hex;
+    const ak = col.dataset.alpha;   // 'ringOpacity' | 'bgOpacity' | 'gradOpacity.N'
+    if (ak) {
+      const box = document.createElement('span'); box.className = 'swBox'; col.replaceWith(box); box.appendChild(col);
+      const sep = document.createElement('span'); sep.className = 'sep';
+      const al = document.createElement('input');
+      al.className = 'alpha'; al.type = 'number'; al.min = 0; al.max = 100; al.step = 1; al.setAttribute('aria-label', t('opacity'));
+      const pc = document.createElement('span'); pc.className = 'pct'; pc.textContent = '%';
+      f.append(sep, al, pc); col._alpha = al;
+      const set = (v) => { const [k, i] = ak.split('.'); if (i == null) state[k] = v; else state[k][+i] = v; update(); };
+      al.addEventListener('input', () => { const v = Math.round(+al.value); if (al.value !== '' && v >= 0 && v <= 100) set(v); });
+      al.addEventListener('change', () => { const v = Math.min(100, Math.max(0, Math.round(+al.value) || 0)); al.value = v; set(v); });
+      al.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') al.blur(); });
+      al.addEventListener('focus', () => al.select());
+    }
     const parse = (v) => { v = v.trim().replace(/^#/, ''); if (/^[0-9a-f]{3}$/i.test(v)) v = v.replace(/./g, '$&$&'); return /^[0-9a-f]{6}$/i.test(v) ? '#' + v.toUpperCase() : null; };
     const apply = (c) => { col.value = c; col.dispatchEvent(new Event('input', { bubbles: true })); };
     hex.addEventListener('input', () => { const c = parse(hex.value); if (c && hex.value.replace('#', '').length === 6) apply(c); });
@@ -571,6 +587,11 @@ function setupColorFields() {
 function syncHex() {
   document.querySelectorAll('.panel input[type=color]').forEach((col) => {
     if (col._hex && document.activeElement !== col._hex) col._hex.value = col.value.slice(1).toUpperCase();
+    if (col._alpha) {
+      const [k, i] = col.dataset.alpha.split('.'), a = i == null ? state[k] : state[k][+i];
+      if (document.activeElement !== col._alpha) col._alpha.value = a;
+      col.style.opacity = a / 100;
+    }
   });
 }
 
@@ -615,7 +636,7 @@ function setupWheel() {
   const panel = document.querySelector('.panel');
   // custom steppers instead of the native spin box
   const chev = (d) => `<svg viewBox="0 0 8 5"><path d="${d}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-  panel.querySelectorAll('input[type=number]').forEach((inp) => {
+  panel.querySelectorAll('input[type=number]:not(.alpha)').forEach((inp) => {
     const w = document.createElement('span'); w.className = 'numWrap';
     inp.replaceWith(w); w.appendChild(inp);
     const sp = document.createElement('span'); sp.className = 'spin';
@@ -729,6 +750,6 @@ if (location.hash.length > 1) state = fromQuery(location.hash.slice(1));
 buildUI();
 setupColorFields();
 setupWheel();
-document.fonts?.ready.then(() => { placeUnit.force = true; document.querySelectorAll('.panel input[type=number]').forEach(placeUnit); placeUnit.force = false; });
+document.fonts?.ready.then(() => { placeUnit.force = true; document.querySelectorAll('.panel input[type=number]:not(.alpha)').forEach(placeUnit); placeUnit.force = false; });
 applyLang();
 update();

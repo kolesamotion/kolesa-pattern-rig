@@ -24,6 +24,8 @@ export const LIMITS = {
   tsRatio: [0.01, 10, 0.001],
   scale: [5, 1000, 1],
   gradAngle: [0, 360, 1],
+  ringOpacity: [0, 100, 1],
+  bgOpacity: [0, 100, 1],
   rotX: [-180, 180, 1],
   rotY: [-180, 180, 1],
   rotZ: [-180, 180, 1],
@@ -49,6 +51,9 @@ export const DEFAULTS = {
   bgColor: '#0077FF',
   bgOn: true,
   grad: ['#0023A6', '#0042FF', '#0023A6'],
+  gradOpacity: [100, 100, 100],   // per stop, %
+  ringOpacity: 100,               // %, solid ring colour
+  bgOpacity: 100,                 // %
   gradAngle: 45,
   width: 1920, height: 1080,
   cx: 0.5, cy: 0.5,       // centre as a fraction of the frame
@@ -171,6 +176,8 @@ function bandPath(arc, t, P) {
   return poly(outer.concat(inner), P);
 }
 
+// Opacity attribute only when it isn't 100 %, so default exports stay unchanged.
+const alphaAttr = (name, pct) => (pct == null || +pct >= 100 ? '' : ` ${name}="${+(Math.max(0, +pct) / 100).toFixed(3)}"`);
 const esc = (c) => String(c).replace(/[^#0-9a-fA-F]/g, '');
 
 export function buildSVG(s) {
@@ -183,16 +190,17 @@ export function buildSVG(s) {
     const a = rad(s.gradAngle);
     const dx = Math.cos(a) * outerR, dy = Math.sin(a) * outerR;
     defs = `<defs><linearGradient id="kp-grad" gradientUnits="userSpaceOnUse" x1="${f(-dx)}" y1="${f(-dy)}" x2="${f(dx)}" y2="${f(dy)}">` +
-      `<stop offset="0" stop-color="${esc(s.grad[0])}"/><stop offset="0.5" stop-color="${esc(s.grad[1])}"/>` +
-      `<stop offset="1" stop-color="${esc(s.grad[2])}"/></linearGradient></defs>`;
+      ['0', '0.5', '1'].map((o, i) => `<stop offset="${o}" stop-color="${esc(s.grad[i])}"${alphaAttr('stop-opacity', s.gradOpacity?.[i])}/>`).join('') +
+      `</linearGradient></defs>`;
     paint = 'url(#kp-grad)';
   }
 
   const { body, tf } = ringsGroup(s, paint);
-  const bg = s.bgOn ? `<rect id="background" width="${W}" height="${H}" fill="${esc(s.bgColor)}"/>` : '';
+  const bg = s.bgOn ? `<rect id="background" width="${W}" height="${H}" fill="${esc(s.bgColor)}"${alphaAttr('fill-opacity', s.bgOpacity)}/>` : '';
+  const ringsAlpha = s.gradient ? '' : alphaAttr('opacity', s.ringOpacity);   // rings never overlap, so group opacity = fill opacity
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" fill="none">` +
     `${defs}<clipPath id="kp-clip"><rect width="${W}" height="${H}"/></clipPath>` +
-    `<g id="Kolesa pattern">${bg}<g clip-path="url(#kp-clip)"><g id="rings" transform="${tf}">${body}</g></g></g></svg>`;
+    `<g id="Kolesa pattern">${bg}<g clip-path="url(#kp-clip)"><g id="rings" transform="${tf}"${ringsAlpha}>${body}</g></g></g></svg>`;
 }
 
 // Rings (and core) in pattern-local units plus the transform that places them in the format.
