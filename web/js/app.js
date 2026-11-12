@@ -28,7 +28,7 @@ const STR_KEYS = ['variant', 'ringColor', 'bgColor', 'scaleMode'];
 
 let state = structuredClone(DEFAULTS);
 let lang = 'ru';
-const CAM_KEYS = ['rotX', 'rotY', 'rotZ', 'camDist'];
+const CAM_KEYS = ['rotX', 'rotY', 'camDist'];
 const sliders = {};
 
 const store = {
@@ -133,11 +133,12 @@ function buildUI() {
   for (const k of ['r0', 'skip', 'draw', 'dropout', 'seed']) makeSlider($('advSliders'), k, k);
   for (const k of CAM_KEYS) makeSlider($('camSliders'), k, k);
   makeSlider($('scaleSlider'), 'scale', 'scale');
+  makeSlider($('scaleSlider'), 'rotZ', 'rotZ');
   makeSlider($('angleSlider'), 'gradAngle', 'angle');
 
   for (const k of BOOL_KEYS) $(k).addEventListener('change', (e) => { state[k] = e.target.checked; update(); });
   $('scaleMode').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => switchScaleMode(b.dataset.v)));
-  $('resetCam').addEventListener('click', () => { for (const k of [...CAM_KEYS, 'panX', 'panY']) state[k] = DEFAULTS[k]; update(); });
+  $('resetCam').addEventListener('click', () => { for (const k of [...CAM_KEYS, 'rotZ', 'panX', 'panY']) state[k] = DEFAULTS[k]; update(); });
   $('centerBtn').addEventListener('click', () => { state.cx = 0.5; state.cy = 0.5; update(); });
 
   swatches($('ringSw'), RING_COLORS, 'ringColor');
@@ -236,7 +237,7 @@ function fitFrame() {
   fr.style.height = Math.max(1, state.height * k) + 'px';
 }
 
-// Navigation. 3D: LMB orbit, Ctrl/Cmd+LMB (or +wheel) rotation Z, MMB pan, RMB drag / wheel dolly, H = frame. 2D: LMB / MMB move the pattern.
+// Navigation. Both modes: Ctrl/Cmd+LMB (or +wheel) rotation Z. 3D: LMB orbit, MMB pan, RMB drag / wheel dolly, H = frame. 2D: LMB / MMB move the pattern.
 function setupDrag() {
   const fr = $('frame');
   let start = null;
@@ -245,12 +246,13 @@ function setupDrag() {
     if (typing() || e.metaKey || e.ctrlKey) return;
     if ((e.key === 'h' || e.key === 'H' || e.code === 'KeyH') && state.threeD) { frameAll(); e.preventDefault(); }
   });
-  fr.addEventListener('contextmenu', (e) => { if (state.threeD) e.preventDefault(); });
+  fr.addEventListener('contextmenu', (e) => { if (state.threeD || e.ctrlKey) e.preventDefault(); });
   fr.addEventListener('auxclick', (e) => e.preventDefault());
   fr.addEventListener('pointerdown', (e) => {
     // 3D: LMB orbit, MMB pan, RMB dolly. 2D: LMB and MMB move the pattern.
     let mode;
-    if (state.threeD) mode = e.button === 0 && (e.ctrlKey || e.metaKey) ? 'roll' : ['orbit', 'pan', 'dolly'][e.button];
+    if (e.button === 0 && (e.ctrlKey || e.metaKey)) mode = 'roll';   // both modes: rotation Z
+    else if (state.threeD) mode = ['orbit', 'pan', 'dolly'][e.button];
     else mode = e.button === 0 || e.button === 1 ? 'move' : null;
     if (!mode) return;
     e.preventDefault();
@@ -283,7 +285,7 @@ function setupDrag() {
   fr.addEventListener('pointerup', end); fr.addEventListener('pointercancel', end);
   fr.addEventListener('wheel', (e) => {
     e.preventDefault();
-    if (state.threeD && (e.ctrlKey || e.metaKey)) state.rotZ = ((state.rotZ - e.deltaY * 0.1 + 540) % 360) - 180;   // 3D + Ctrl/Cmd: roll
+    if (e.ctrlKey || e.metaKey) state.rotZ = ((state.rotZ - e.deltaY * 0.1 + 540) % 360) - 180;   // 3D + Ctrl/Cmd: roll
     else if (state.threeD) state.camDist = state.camDist * Math.exp(e.deltaY * 0.0015);   // 3D: dolly
     else state.scale = state.scale * Math.exp(-e.deltaY * 0.0015);                   // 2D: scale
     clampAll(state); update();

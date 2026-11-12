@@ -204,7 +204,9 @@ export function buildSVG(s) {
     }
   }
 
-  const tf = `translate(${f(cx)} ${f(cy)}) scale(${f(k)})`;
+  // In 2D the pattern turns in its plane by rotZ (in 3D rotZ is part of the projection).
+  const rot2d = !s.threeD && s.rotZ ? ` rotate(${f(s.rotZ)})` : '';
+  const tf = `translate(${f(cx)} ${f(cy)}) scale(${f(k)})${rot2d}`;
   const bg = s.bgOn ? `<rect id="background" width="${W}" height="${H}" fill="${esc(s.bgColor)}"/>` : '';
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" fill="none">` +
     `${defs}<clipPath id="kp-clip"><rect width="${W}" height="${H}"/></clipPath>` +
