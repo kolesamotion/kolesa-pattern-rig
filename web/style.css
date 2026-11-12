@@ -104,7 +104,7 @@ input[type=color] { width: 32px; height: 32px; border: 1px solid var(--input); b
   box-shadow: 0 0 0 1px color-mix(in oklch, var(--foreground) 10%, transparent), 0 12px 32px -12px rgb(29 33 41 / 0.25);
   background-image: linear-gradient(45deg,var(--neutral-20) 25%,transparent 25%),linear-gradient(-45deg,var(--neutral-20) 25%,transparent 25%),linear-gradient(45deg,transparent 75%,var(--neutral-20) 75%),linear-gradient(-45deg,transparent 75%,var(--neutral-20) 75%);
   background-size: 16px 16px; background-position: 0 0,0 8px,8px -8px,-8px 0; background-color: var(--white); }
-.ghost { position: absolute; inset: 0; pointer-events: none; color: color-mix(in srgb, var(--foreground) 9%, var(--muted)); }
+.ghost { position: absolute; inset: 0; pointer-events: none; color: color-mix(in srgb, var(--foreground) 4%, var(--muted)); }
 .ghost svg { display: block; width: 100%; height: 100%; }
 body.resizing .ghost { visibility: hidden; }   /* frame is only CSS-scaled while the panel is dragged */
 .frame.drag { cursor: grabbing; }
