@@ -17,10 +17,10 @@ const GRADS = [
   { c: ['#C2DEFF', '#61ACFF', '#0077FF'], a: 90 },   // brand gradient 3
 ];
 const UNITS = { shift: '', step: 'px', thickness: 'px', gap: '°', twist: '°', r0: 'px', draw: '%', dropout: '%', scale: '%', gradAngle: '°', rotX: '°', rotY: '°', rotZ: '°', camDist: 'px' };
-const NUM_KEYS = ['rings', 'shift', 'step', 'thickness', 'gap', 'twist', 'r0', 'skip', 'draw', 'dropout', 'seed', 'gradAngle', 'width', 'height', 'cx', 'cy', 'scale', 'rotX', 'rotY', 'rotZ', 'camDist', 'panX', 'panY'];
+const NUM_KEYS = ['rings', 'shift', 'step', 'thickness', 'gap', 'twist', 'r0', 'skip', 'draw', 'dropout', 'seed', 'gradAngle', 'width', 'height', 'cx', 'cy', 'scale', 'rotX', 'rotY', 'rotZ', 'camDist', 'panX', 'panY', 'tsRatio'];
 // Geometry section (incl. «Дополнительно»); 3D mode and camera are kept.
-const GEOM_KEYS = ['rings', 'shift', 'step', 'thickness', 'gap', 'twist', 'variation', 'r0', 'skip', 'draw', 'dropout', 'seed', 'core'];
-const BOOL_KEYS = ['core', 'variation', 'threeD', 'gradient', 'bgOn'];
+const GEOM_KEYS = ['rings', 'shift', 'step', 'thickness', 'linkTS', 'tsRatio', 'gap', 'twist', 'variation', 'r0', 'skip', 'draw', 'dropout', 'seed', 'core'];
+const BOOL_KEYS = ['core', 'variation', 'threeD', 'gradient', 'bgOn', 'linkTS'];
 const STR_KEYS = ['variant', 'ringColor', 'bgColor', 'scaleMode'];
 
 let state = structuredClone(DEFAULTS);
@@ -61,6 +61,14 @@ function clampAll(s) {
 }
 
 // ---------- UI builders ----------
+// Linked mode: thickness = step × tsRatio. Moving either slider moves the other.
+function linkThickness(key) {
+  if (!state.linkTS) return;
+  const [tl, th] = LIMITS.thickness, [sl, sh] = LIMITS.step;
+  if (key === 'step') state.thickness = Math.min(th, Math.max(tl, Math.round(state.step * state.tsRatio)));
+  if (key === 'thickness') state.step = Math.min(sh, Math.max(sl, Math.round(state.thickness / state.tsRatio)));
+}
+
 function makeSlider(parent, key, labelKey) {
   const [min, max, step] = LIMITS[key];
   const el = document.createElement('div');
@@ -69,7 +77,7 @@ function makeSlider(parent, key, labelKey) {
     `<input type="range" min="${min}" max="${max}" step="${step}"><input class="kds-input" type="number" min="${min}" max="${max}" step="${step}">`;
   parent.appendChild(el);
   const [range, num] = el.querySelectorAll('input');
-  const onInput = (v) => { state[key] = Math.min(max, Math.max(min, +v)); update(); };
+  const onInput = (v) => { state[key] = Math.min(max, Math.max(min, +v)); linkThickness(key); update(); };
   range.addEventListener('input', () => onInput(range.value));
   num.addEventListener('change', () => onInput(num.value));
   sliders[key] = { range, num };
@@ -141,6 +149,7 @@ function buildUI() {
   makeSlider($('angleSlider'), 'gradAngle', 'angle');
 
   for (const k of BOOL_KEYS) $(k).addEventListener('change', (e) => { state[k] = e.target.checked; update(); });
+  $('linkTS').addEventListener('change', (e) => { if (e.target.checked) state.tsRatio = state.thickness / state.step; update(); });
   $('scaleMode').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => switchScaleMode(b.dataset.v)));
   $('resetGeom').addEventListener('click', () => {
     for (const k of GEOM_KEYS) state[k] = DEFAULTS[k];
@@ -240,6 +249,7 @@ function render() {
     range.value = v;
   }
   for (const k of BOOL_KEYS) $(k).checked = !!s[k];
+  $('tsRatioText').textContent = s.linkTS ? `${Math.round(s.tsRatio * 100)} %` : '';
   $('shiftOn').checked = shiftTarget != null ? shiftTarget === 1 : s.shift > 0;
   syncFormat();
   $('variants').querySelectorAll('button').forEach((b) => b.classList.toggle('is-active', b.dataset.v === s.variant));

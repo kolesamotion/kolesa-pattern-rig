@@ -21,6 +21,7 @@ export const LIMITS = {
   draw: [0, 100, 1],
   dropout: [0, 100, 1],
   seed: [1, 999, 1],
+  tsRatio: [0.01, 10, 0.001],
   scale: [5, 1000, 1],
   gradAngle: [0, 360, 1],
   rotX: [-180, 180, 1],
@@ -37,6 +38,8 @@ export const DEFAULTS = {
   rings: 8, shift: 1, step: 72, thickness: 40, gap: 0, twist: 0,
   r0: 60, core: true, skip: 0, draw: 100, dropout: 0, seed: 1,
   variation: false,       // per-ring gap/angle variation (broken C-rings)
+  linkTS: false,          // thickness follows step (UI only: thickness = step × tsRatio)
+  tsRatio: 40 / 72,       // brand ratio, Figma 20:1716
   threeD: false,          // real 3D: rings rotated in space, perspective camera
   rotX: 55, rotY: -25, rotZ: 0,   // degrees
   camDist: 2400,          // camera distance from the pattern centre, brand px (dolly)

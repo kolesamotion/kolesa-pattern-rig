@@ -59,6 +59,7 @@ input[type=range] { width: 100%; accent-color: var(--primary); cursor: pointer; 
 .switch::before { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--white);
   box-shadow: 0 1px 2px rgb(29 33 41 / 0.25); transition: transform var(--duration-fast) var(--ease-out); }
 .switch:checked { background: var(--primary); }
+#tsRatioText { color: var(--muted-foreground); font-size: 12px; font-variant-numeric: tabular-nums; }
 .switch:checked::before { transform: translateX(14px); }
 .check:hover .switch:not(:checked) { background: color-mix(in oklch, var(--input) 65%, transparent); }
 .switch:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 30%, transparent); }
