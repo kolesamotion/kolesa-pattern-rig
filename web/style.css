@@ -34,6 +34,12 @@ section { padding: var(--space-6) 0 0; margin-top: var(--space-6); border-top: 1
 .seg-sm { height: 32px; }
 .seg-sm .kds-tabs__trigger { padding: 0 var(--space-2); font-size: 12px; text-transform: uppercase; }
 
+/* Aspect-ratio slider (Figma Temp 21:8904): label · track · proportion icon · ratio */
+.ratioRow { display: grid; grid-template-columns: auto 1fr 22px minmax(36px, auto); align-items: center; gap: var(--space-2) var(--space-3); min-height: 32px; }
+.ratioRow .kds-label { white-space: nowrap; }
+.ratioIcon { display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; }
+.ratioIcon i { display: block; border: 1.5px solid var(--foreground); border-radius: 3px; box-sizing: border-box; transition: width var(--duration-fast) var(--ease-out), height var(--duration-fast) var(--ease-out); }
+.ratioText { font: 400 12px/16px var(--font-mono); color: var(--muted-foreground); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 select.kds-input { appearance: none; padding-right: 32px; cursor: pointer;
   background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' fill='none' stroke='%23808a9c' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 10px center; }
 select.kds-input option { color: #1d2129; }

@@ -4,13 +4,8 @@ import { ICONS } from './icons.js?v=__V__';
 
 const $ = (id) => document.getElementById(id);
 
-const FORMATS = [
-  { k: 'p_landscape', w: 1920, h: 1080 },
-  { k: 'p_story', w: 1080, h: 1920 },
-  { k: 'p_square', w: 1080, h: 1080 },
-  { k: 'p_billboard', w: 6000, h: 3000 },
-  { k: 'p_phone', w: 390, h: 844 },
-];
+// Aspect-ratio stops of the format slider (Figma Temp 21:8904), portrait → landscape.
+const RATIOS = [[9, 16], [2, 3], [3, 4], [1, 1], [4, 3], [3, 2], [16, 9]];
 // Brand colours (Brand guidelines 14:65). #005EFF = #0065DB hard-light over #0077FF, flattened.
 const RING_COLORS = ['#005EFF', '#0065DB', '#0077FF', '#004799', '#001833', '#C2DEFF', '#FFFFFF'];
 const BG_COLORS = ['#0077FF', '#FFFFFF', '#001833', '#1D2129', '#C2DEFF'];
@@ -121,15 +116,20 @@ function buildUI() {
     b.addEventListener('click', () => { Object.assign(state, VARIANTS[v], { variant: v }); update(); });
     $('variants').appendChild(b);
   }
-  // formats
-  const sel = $('formatPreset');
-  FORMATS.forEach((fm, i) => { const o = document.createElement('option'); o.value = i; o.dataset.t = fm.k; sel.appendChild(o); });
-  const oc = document.createElement('option'); oc.value = 'custom'; oc.dataset.t = 'custom'; sel.appendChild(oc);
-  sel.addEventListener('change', () => {
-    if (sel.value === 'custom') return;
-    const fm = FORMATS[+sel.value]; state.width = fm.w; state.height = fm.h; update();
+  // format: aspect-ratio slider keeps the long side; width/height fields update live both ways
+  $('ratio').addEventListener('input', (e) => {
+    const [a, b] = RATIOS[+e.target.value], L = Math.max(state.width, state.height);
+    if (a >= b) { state.width = L; state.height = Math.round(L * b / a); }
+    else { state.height = L; state.width = Math.round(L * a / b); }
+    syncFormat(); update();
   });
-  for (const k of ['width', 'height']) $(k).addEventListener('change', (e) => { state[k] = +e.target.value || state[k]; clampAll(state); update(); });
+  for (const k of ['width', 'height']) {
+    $(k).addEventListener('input', (e) => {
+      const v = Math.round(+e.target.value);
+      if (v >= 16 && v <= 20000) { state[k] = v; syncFormat(); update(); }
+    });
+    $(k).addEventListener('change', (e) => { state[k] = +e.target.value || state[k]; clampAll(state); update(); });
+  }
 
   for (const k of ['rings', 'shift', 'step', 'thickness', 'gap', 'twist']) makeSlider($('geomSliders'), k, k);
   for (const k of ['r0', 'skip', 'draw', 'dropout', 'seed']) makeSlider($('advSliders'), k, k);
@@ -221,9 +221,7 @@ function render() {
     range.value = v;
   }
   for (const k of BOOL_KEYS) $(k).checked = !!s[k];
-  $('width').value = s.width; $('height').value = s.height;
-  const fi = FORMATS.findIndex((fm) => fm.w === s.width && fm.h === s.height);
-  $('formatPreset').value = fi >= 0 ? String(fi) : 'custom';
+  syncFormat();
   $('variants').querySelectorAll('button').forEach((b) => b.classList.toggle('is-active', b.dataset.v === s.variant));
   $('scaleMode').querySelectorAll('button').forEach((b) => b.classList.toggle('is-active', b.dataset.v === s.scaleMode));
   $('ringSw').querySelectorAll('.sw').forEach((b) => b.classList.toggle('on', b.dataset.c === s.ringColor.toUpperCase()));
@@ -284,6 +282,23 @@ function setupResizer() {
   });
   window.addEventListener('resize', () => { w = setPanelW(w, false); });
 }
+
+// Format controls from state: fields (unless being typed in), slider stop, proportion icon, ratio text.
+function syncFormat() {
+  const s = state, ae = document.activeElement;
+  if (ae !== $('width')) $('width').value = s.width;
+  if (ae !== $('height')) $('height').value = s.height;
+  const r = s.width / s.height;
+  let best = 0;
+  RATIOS.forEach(([a, b], i) => { if (Math.abs(Math.log(a / b / r)) < Math.abs(Math.log(RATIOS[best][0] / RATIOS[best][1] / r))) best = i; });
+  if (ae !== $('ratio')) $('ratio').value = best;
+  const g = gcd(s.width, s.height), a = s.width / g, b = s.height / g;
+  $('ratioText').textContent = a <= 99 && b <= 99 ? `${a}:${b}` : r >= 1 ? `${+r.toFixed(2)}:1` : `1:${+(1 / r).toFixed(2)}`;
+  const i = $('ratioIcon').firstElementChild;
+  i.style.width = (r >= 1 ? 22 : Math.max(5, 22 * r)) + 'px';
+  i.style.height = (r >= 1 ? Math.max(5, 22 / r) : 22) + 'px';
+}
+function gcd(a, b) { while (b) [a, b] = [b, a % b]; return a; }
 
 function fitScale() {
   const st = $('stage');
