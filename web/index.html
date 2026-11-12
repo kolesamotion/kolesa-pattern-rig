@@ -35,12 +35,19 @@
       <h2 data-t="geometry"></h2>
       <div id="geomSliders"></div>
       <label class="check"><input type="checkbox" id="variation"><span data-t="variation"></span></label>
-      <label class="check"><input type="checkbox" id="perspective"><span data-t="perspectiveOn"></span></label>
+      <label class="check"><input type="checkbox" id="threeD"><span data-t="threeD"></span></label>
       <details>
         <summary data-t="advanced"></summary>
         <div id="advSliders"></div>
         <label class="check"><input type="checkbox" id="core"><span data-t="core"></span></label>
       </details>
+    </section>
+
+    <section id="cameraSec" class="cameraSec">
+      <h2 data-t="camera"></h2>
+      <div id="camSliders"></div>
+      <button class="ghost" id="resetCam" data-t="resetCam"></button>
+      <p class="hint" data-t="orbitHint"></p>
     </section>
 
     <section>
@@ -85,6 +92,10 @@
   </aside>
 
   <main class="stage" id="stage">
+    <div class="tools seg" id="tools">
+      <button data-v="move" data-t="toolMove"></button>
+      <button data-v="orbit" data-t="toolOrbit"></button>
+    </div>
     <div class="frame" id="frame"></div>
     <div class="size" id="sizeLabel"></div>
   </main>

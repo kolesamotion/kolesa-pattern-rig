@@ -23,6 +23,10 @@ export const LIMITS = {
   seed: [1, 999, 1],
   scale: [5, 1000, 1],
   gradAngle: [0, 360, 1],
+  rotX: [-180, 180, 1],
+  rotY: [-180, 180, 1],
+  rotZ: [-180, 180, 1],
+  camDist: [300, 20000, 10],
 };
 
 // Brand defaults (Figma 20:1716).
@@ -31,7 +35,9 @@ export const DEFAULTS = {
   rings: 8, shift: 1, step: 72, thickness: 40, gap: 0, twist: 0,
   r0: 60, core: true, skip: 0, draw: 100, dropout: 0, seed: 1,
   variation: false,       // per-ring gap/angle variation (broken C-rings)
-  perspective: false,     // rotate(-20) scaleY(0.77) skewX(40)
+  threeD: false,          // real 3D: rings rotated in space, perspective camera
+  rotX: 55, rotY: -25, rotZ: 0,   // degrees
+  camDist: 2400,          // camera distance from the pattern centre, brand px
   gradient: false,
   ringColor: '#005EFF',
   bgColor: '#0077FF',
@@ -46,11 +52,11 @@ export const DEFAULTS = {
 
 // Variants = parameter presets on top of the current state.
 export const VARIANTS = {
-  main:        { shift: 1, gap: 0, twist: 0, variation: false, perspective: false, gradient: false, skip: 0, core: true, rings: 8, scaleMode: 'rel', scale: 100 },
-  cropped:     { shift: 1, gap: 0, twist: 0, variation: false, perspective: false, gradient: false, skip: 3, core: false, rings: 9, scaleMode: 'rel', scale: 45 },
-  perspective: { shift: 1, gap: 0, twist: 0, variation: false, perspective: true,  gradient: false, skip: 0, core: true, rings: 8 },
-  broken:      { shift: 0, gap: 120, twist: 0, variation: true, perspective: false, gradient: false, skip: 0, core: false, rings: 5, scaleMode: 'rel', scale: 60 },
-  gradient:    { shift: 1, gap: 0, twist: 0, variation: false, perspective: false, gradient: true,  skip: 0, core: true, rings: 8 },
+  main:     { shift: 1, gap: 0, twist: 0, variation: false, threeD: false, gradient: false, skip: 0, core: true, rings: 8, scaleMode: 'rel', scale: 100 },
+  cropped:  { shift: 1, gap: 0, twist: 0, variation: false, threeD: false, gradient: false, skip: 3, core: false, rings: 9, scaleMode: 'rel', scale: 45 },
+  '3d':     { shift: 1, gap: 0, twist: 0, variation: false, threeD: true,  gradient: false, skip: 0, core: true, rings: 8, rotX: 55, rotY: -25, rotZ: 0, camDist: 2400 },
+  broken:   { shift: 0, gap: 120, twist: 0, variation: true, threeD: false, gradient: false, skip: 0, core: false, rings: 5, scaleMode: 'rel', scale: 60 },
+  gradient: { shift: 1, gap: 0, twist: 0, variation: false, threeD: false, gradient: true,  skip: 0, core: true, rings: 8 },
 };
 
 // Per-ring coefficients used by the Cavalry rig for open C-rings (Figma 20:1767).
@@ -94,7 +100,9 @@ function arcPath(r, a0, a1) {
   return `M${f(x0)} ${f(y0)}A${f(r)} ${f(r)} 0 ${large} ${sweep} ${f(x1)} ${f(y1)}`;
 }
 
-// Returns ring geometry in pattern-local units (centre at 0,0, before scale).
+
+// Ring geometry in pattern-local units (centre 0,0, before scale): a list of arcs {r, a0, a1}
+// per ring (angles as in arcPath) plus the core half-disc radius.
 export function buildRings(s) {
   const rand = rng(s.seed * 9973);
   const d = Math.max(0, Math.min(100, s.draw)) / 100;
@@ -108,47 +116,91 @@ export function buildRings(s) {
     const rot = n * s.twist + (s.variation ? ANGLE0[n % 8] : 0);
     // Gap sits at 3 o'clock: half is cut from the upper arc, half from the lower one.
     const half = Math.max(0, 180 - g / 2) * d;
-    const upper = arcPath(ru, 180 + rot, 180 + rot + half);
-    const lower = arcPath(rl, 180 + rot, 180 + rot - half);
-    out.push({ n, ru, rl, path: [upper, lower].filter(Boolean).join(' ') });
+    const arcs = [];
+    if (half > 0.01) {
+      arcs.push({ r: ru, a0: 180 + rot, a1: 180 + rot + half });
+      arcs.push({ r: rl, a0: 180 + rot, a1: 180 + rot - half });
+    }
+    if (arcs.length) out.push({ n, arcs });
   }
-  let core = null;
-  if (s.core && s.skip === 0 && s.shift > 0) {
-    const R = s.r0 - s.step + (s.shift * s.step) / 2 + s.thickness / 2;
-    if (R > 0) core = `M${f(-R)} 0A${f(R)} ${f(R)} 0 0 0 ${f(R)} 0Z`;
+  let coreR = 0;
+  if (s.core && s.skip === 0 && s.shift > 0) coreR = Math.max(0, s.r0 - s.step + (s.shift * s.step) / 2 + s.thickness / 2);
+  return { rings: out, coreR };
+}
+
+// 3D: the pattern lies in the plane z = 0; it is turned by rotZ (in its plane), tilted by rotX,
+// turned by rotY, then seen by a perspective camera at distance camDist looking at the centre.
+export function makeProjector(s) {
+  const cz = Math.cos(rad(s.rotZ)), sz = Math.sin(rad(s.rotZ));
+  const cx = Math.cos(rad(s.rotX)), sx = Math.sin(rad(s.rotX));
+  const cy = Math.cos(rad(s.rotY)), sy = Math.sin(rad(s.rotY));
+  const D = s.camDist;
+  return (x, y) => {
+    const x1 = x * cz - y * sz, y1 = x * sz + y * cz;
+    const y2 = y1 * cx, z2 = y1 * sx;
+    const x3 = x1 * cy + z2 * sy, z3 = -x1 * sy + z2 * cy;
+    const w = D / Math.max(D * 0.05, D + z3);
+    return [x3 * w, y2 * w];
+  };
+}
+
+function sampleArc(r, a0, a1) {
+  const n = Math.max(2, Math.ceil(Math.abs(a1 - a0) / 2.5));
+  const pts = [];
+  for (let i = 0; i <= n; i++) {
+    const a = rad(a0 + ((a1 - a0) * i) / n);
+    pts.push([r * Math.cos(a), r * Math.sin(a)]);
   }
-  return { rings: out, core };
+  return pts;
+}
+const poly = (pts, P) => 'M' + pts.map(([x, y]) => { const [X, Y] = P(x, y); return `${f(X)} ${f(Y)}`; }).join('L') + 'Z';
+
+// Band of an arc as a closed outline (outer edge forward, inner edge back), projected.
+function bandPath(arc, t, P) {
+  const outer = sampleArc(arc.r + t / 2, arc.a0, arc.a1);
+  const inner = sampleArc(Math.max(0, arc.r - t / 2), arc.a1, arc.a0);
+  return poly(outer.concat(inner), P);
 }
 
 const esc = (c) => String(c).replace(/[^#0-9a-fA-F]/g, '');
 
-export function buildSVG(s, { forExport = true } = {}) {
+export function buildSVG(s) {
   const W = s.width, H = s.height;
   const k = scaleFactor(s);
   const cx = s.cx * W, cy = s.cy * H;
-  const { rings, core } = buildRings(s);
-  const outerR = (s.r0 + (s.rings - 1) * s.step + s.step / 2 + s.thickness / 2);
+  const { rings, coreR } = buildRings(s);
+  const outerR = s.r0 + (s.rings - 1) * s.step + s.step / 2 + s.thickness / 2;
 
   let defs = '';
-  let stroke = esc(s.ringColor);
+  let paint = esc(s.ringColor);
   if (s.gradient) {
     const a = rad(s.gradAngle);
     const dx = Math.cos(a) * outerR, dy = Math.sin(a) * outerR;
     defs = `<defs><linearGradient id="kp-grad" gradientUnits="userSpaceOnUse" x1="${f(-dx)}" y1="${f(-dy)}" x2="${f(dx)}" y2="${f(dy)}">` +
       `<stop offset="0" stop-color="${esc(s.grad[0])}"/><stop offset="0.5" stop-color="${esc(s.grad[1])}"/>` +
       `<stop offset="1" stop-color="${esc(s.grad[2])}"/></linearGradient></defs>`;
-    stroke = 'url(#kp-grad)';
+    paint = 'url(#kp-grad)';
   }
 
-  const persp = s.perspective ? ' rotate(-20) scale(1 0.77) skewX(40)' : '';
-  const tf = `translate(${f(cx)} ${f(cy)})${persp} scale(${f(k)})`;
-  const sw = f(s.thickness);
-  const ringEls = rings.map((r) =>
-    `<path id="ring-${r.n}" d="${r.path}" stroke="${stroke}" stroke-width="${sw}" fill="none"/>`).join('');
-  const coreEl = core ? `<path id="core" d="${core}" fill="${stroke}"/>` : '';
-  const bg = s.bgOn ? `<rect id="background" width="${W}" height="${H}" fill="${esc(s.bgColor)}"/>` : '';
+  let body = '';
+  if (s.threeD) {
+    // Projected rings are filled outlines: a stroke can't follow perspective foreshortening.
+    const P = makeProjector(s);
+    if (coreR > 0) body += `<path id="core" d="${poly(sampleArc(coreR, 180, 0), P)}" fill="${paint}"/>`;
+    for (const r of rings) {
+      body += `<path id="ring-${r.n}" d="${r.arcs.map((a) => bandPath(a, s.thickness, P)).join('')}" fill="${paint}"/>`;
+    }
+  } else {
+    if (coreR > 0) body += `<path id="core" d="M${f(-coreR)} 0A${f(coreR)} ${f(coreR)} 0 0 0 ${f(coreR)} 0Z" fill="${paint}"/>`;
+    const sw = f(s.thickness);
+    for (const r of rings) {
+      body += `<path id="ring-${r.n}" d="${r.arcs.map((a) => arcPath(a.r, a.a0, a.a1)).join(' ')}" stroke="${paint}" stroke-width="${sw}" fill="none"/>`;
+    }
+  }
 
+  const tf = `translate(${f(cx)} ${f(cy)}) scale(${f(k)})`;
+  const bg = s.bgOn ? `<rect id="background" width="${W}" height="${H}" fill="${esc(s.bgColor)}"/>` : '';
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" fill="none">` +
-    `${defs}<g id="Kolesa pattern">${bg}<g clip-path="url(#kp-clip)"><g id="rings" transform="${tf}">${coreEl}${ringEls}</g></g></g>` +
-    `<clipPath id="kp-clip"><rect width="${W}" height="${H}"/></clipPath></svg>`;
+    `${defs}<clipPath id="kp-clip"><rect width="${W}" height="${H}"/></clipPath>` +
+    `<g id="Kolesa pattern">${bg}<g clip-path="url(#kp-clip)"><g id="rings" transform="${tf}">${body}</g></g></g></svg>`;
 }

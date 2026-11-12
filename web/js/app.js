@@ -20,13 +20,15 @@ const GRADS = [
   { c: ['#85BEFF', '#0077FF', '#0056B8'], a: 90 },   // brand gradient 2
   { c: ['#C2DEFF', '#61ACFF', '#0077FF'], a: 90 },   // brand gradient 3
 ];
-const UNITS = { shift: '', step: 'px', thickness: 'px', gap: '°', twist: '°', r0: 'px', draw: '%', dropout: '%', scale: '%', gradAngle: '°' };
-const NUM_KEYS = ['rings', 'shift', 'step', 'thickness', 'gap', 'twist', 'r0', 'skip', 'draw', 'dropout', 'seed', 'gradAngle', 'width', 'height', 'cx', 'cy', 'scale'];
-const BOOL_KEYS = ['core', 'variation', 'perspective', 'gradient', 'bgOn'];
+const UNITS = { shift: '', step: 'px', thickness: 'px', gap: '°', twist: '°', r0: 'px', draw: '%', dropout: '%', scale: '%', gradAngle: '°', rotX: '°', rotY: '°', rotZ: '°', camDist: 'px' };
+const NUM_KEYS = ['rings', 'shift', 'step', 'thickness', 'gap', 'twist', 'r0', 'skip', 'draw', 'dropout', 'seed', 'gradAngle', 'width', 'height', 'cx', 'cy', 'scale', 'rotX', 'rotY', 'rotZ', 'camDist'];
+const BOOL_KEYS = ['core', 'variation', 'threeD', 'gradient', 'bgOn'];
 const STR_KEYS = ['variant', 'ringColor', 'bgColor', 'scaleMode'];
 
 let state = structuredClone(DEFAULTS);
 let lang = 'ru';
+let tool = 'move';
+const CAM_KEYS = ['rotX', 'rotY', 'rotZ', 'camDist'];
 const sliders = {};
 
 const store = {
@@ -113,11 +115,14 @@ function buildUI() {
 
   for (const k of ['rings', 'shift', 'step', 'thickness', 'gap', 'twist']) makeSlider($('geomSliders'), k, k);
   for (const k of ['r0', 'skip', 'draw', 'dropout', 'seed']) makeSlider($('advSliders'), k, k);
+  for (const k of CAM_KEYS) makeSlider($('camSliders'), k, k);
   makeSlider($('scaleSlider'), 'scale', 'scale');
   makeSlider($('angleSlider'), 'gradAngle', 'angle');
 
   for (const k of BOOL_KEYS) $(k).addEventListener('change', (e) => { state[k] = e.target.checked; update(); });
   $('scaleMode').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => switchScaleMode(b.dataset.v)));
+  $('resetCam').addEventListener('click', () => { for (const k of CAM_KEYS) state[k] = DEFAULTS[k]; update(); });
+  $('tools').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { tool = b.dataset.v; update(); }));
   $('centerBtn').addEventListener('click', () => { state.cx = 0.5; state.cy = 0.5; update(); });
 
   swatches($('ringSw'), RING_COLORS, 'ringColor');
@@ -182,6 +187,10 @@ function update() {
   $('ringColor').value = s.ringColor; $('bgColor').value = s.bgColor;
   ['g0', 'g1', 'g2'].forEach((id, i) => { $(id).value = s.grad[i]; });
   $('gradBox').classList.toggle('show', s.gradient);
+  $('cameraSec').classList.toggle('show', s.threeD);
+  $('tools').classList.toggle('show', s.threeD);
+  $('tools').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === tool));
+  $('frame').classList.toggle('orbit', s.threeD && tool === 'orbit');
   $('sizeLabel').textContent = `${s.width} × ${s.height}`;
   fitFrame();
   clearTimeout(hashTimer);
@@ -200,18 +209,33 @@ function fitFrame() {
 function setupDrag() {
   const fr = $('frame');
   let start = null;
+  fr.addEventListener('contextmenu', (e) => { if (state.threeD) e.preventDefault(); });
   fr.addEventListener('pointerdown', (e) => {
-    start = { x: e.clientX, y: e.clientY, cx: state.cx, cy: state.cy, w: fr.clientWidth, h: fr.clientHeight };
+    const orbit = state.threeD && (tool === 'orbit' || e.altKey || e.button === 2);
+    start = { x: e.clientX, y: e.clientY, cx: state.cx, cy: state.cy, rx: state.rotX, ry: state.rotY, w: fr.clientWidth, h: fr.clientHeight, orbit };
     fr.setPointerCapture(e.pointerId); fr.classList.add('drag');
   });
   fr.addEventListener('pointermove', (e) => {
     if (!start) return;
-    state.cx = start.cx + (e.clientX - start.x) / start.w;
-    state.cy = start.cy + (e.clientY - start.y) / start.h;
+    const dx = e.clientX - start.x, dy = e.clientY - start.y;
+    if (start.orbit) {
+      const wrap = (a) => ((a + 540) % 360) - 180;
+      state.rotY = wrap(start.ry + dx * 0.4);
+      state.rotX = wrap(start.rx - dy * 0.4);
+    } else {
+      state.cx = start.cx + dx / start.w;
+      state.cy = start.cy + dy / start.h;
+    }
     clampAll(state); update();
   });
   const end = () => { start = null; fr.classList.remove('drag'); };
   fr.addEventListener('pointerup', end); fr.addEventListener('pointercancel', end);
+  fr.addEventListener('wheel', (e) => {
+    if (!state.threeD) return;
+    e.preventDefault();
+    state.camDist = state.camDist * Math.exp(e.deltaY * 0.0015);
+    clampAll(state); update();
+  }, { passive: false });
 }
 
 // ---------- export ----------
