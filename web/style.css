@@ -242,4 +242,4 @@ body.resizing .ghost { visibility: hidden; }   /* frame is only CSS-scaled while
 /* Small segmented switch inside a slider's title row (Scale: format-relative / px). */
 .slider .name { align-items: center; }
 .miniSeg { display: inline-flex; height: 24px; padding: 2px; gap: 0; width: auto; margin: 0; border-radius: var(--radius-md); }
-.miniSeg .kds-tabs__trigger { height: 20px; padding: 0 8px; font-size: 12px; line-height: 16px; border-radius: calc(var(--radius-md) - 2px); }
+.miniSeg .kds-tabs__trigger { height: 20px; min-width: 32px; padding: 0 8px; font-size: 12px; line-height: 16px; border-radius: calc(var(--radius-md) - 2px); }
