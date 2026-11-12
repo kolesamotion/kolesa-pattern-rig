@@ -5,7 +5,7 @@ import { ICONS } from './icons.js?v=__V__';
 const $ = (id) => document.getElementById(id);
 
 // Aspect-ratio stops of the format slider (Figma Temp 21:8904), portrait → landscape.
-const RATIOS = [[9, 16], [2, 3], [3, 4], [1, 1], [4, 3], [3, 2], [16, 9]];
+const RATIOS = [[9, 16], [2, 3], [4, 5], [1, 1], [4, 3], [3, 2], [16, 9]];
 // Brand colours (Brand guidelines 14:65). #005EFF = #0065DB hard-light over #0077FF, flattened.
 const RING_COLORS = ['#005EFF', '#0065DB', '#0077FF', '#004799', '#001833', '#C2DEFF', '#FFFFFF'];
 const BG_COLORS = ['#0077FF', '#FFFFFF', '#001833', '#1D2129', '#C2DEFF'];
