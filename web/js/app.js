@@ -27,7 +27,6 @@ const STR_KEYS = ['variant', 'ringColor', 'bgColor', 'scaleMode'];
 
 let state = structuredClone(DEFAULTS);
 let lang = 'ru';
-const held = new Set();   // number keys 1/2/3 held (Cinema 4D navigation)
 const CAM_KEYS = ['rotX', 'rotY', 'rotZ', 'camDist'];
 const sliders = {};
 
@@ -162,12 +161,9 @@ function applyLang() {
   $('presetName').placeholder = t('presetName');
   document.title = t('title');
   $('langs').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.l === lang));
-  const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
-  const alt = isMac ? '⌥ Option' : 'Alt';
   const rows = [
-    ['k_orbit', `${alt} + ЛКМ`, '3 + ЛКМ'], ['k_pan', `${alt} + СКМ`, '1 + ЛКМ'],
-    ['k_dolly', `${alt} + ПКМ`, '2 + ЛКМ'], ['k_dolly', lang === 'en' ? 'Wheel' : lang === 'kk' ? 'Дөңгелек' : 'Колесо'],
-    ['k_move', 'ЛКМ'], ['k_frame', 'H'],
+    ['k_orbit', 'ЛКМ'], ['k_pan', 'СКМ'], ['k_dolly', 'ПКМ'],
+    ['k_dolly', lang === 'en' ? 'Wheel' : lang === 'kk' ? 'Дөңгелек' : 'Колесо'], ['k_frame', 'H'],
   ];
   const mb = lang === 'en' ? { 'ЛКМ': 'LMB', 'СКМ': 'MMB', 'ПКМ': 'RMB' } : lang === 'kk' ? { 'ЛКМ': 'СТБ', 'СКМ': 'ОТБ', 'ПКМ': 'ОңТБ' } : {};
   const tr = (x) => x.replace(/ЛКМ|СКМ|ПКМ/g, (m) => mb[m] || m);
@@ -213,30 +209,23 @@ function fitFrame() {
   fr.style.height = Math.max(1, state.height * k) + 'px';
 }
 
-// Navigation. With 3D on, the camera follows Cinema 4D: Alt+LMB orbit, Alt+MMB pan, Alt+RMB dolly,
-// 1/2/3 + LMB = pan / dolly / orbit, wheel = dolly, H = frame. Plain LMB moves the pattern itself.
+// Navigation. 3D: LMB orbit, MMB pan, RMB drag / wheel dolly, H = frame. 2D: LMB / MMB move the pattern.
 function setupDrag() {
   const fr = $('frame');
   let start = null;
   const typing = () => /INPUT|SELECT|TEXTAREA/.test(document.activeElement?.tagName || '');
   window.addEventListener('keydown', (e) => {
     if (typing() || e.metaKey || e.ctrlKey) return;
-    if (['1', '2', '3'].includes(e.key)) held.add(e.key);
     if ((e.key === 'h' || e.key === 'H' || e.code === 'KeyH') && state.threeD) { frameAll(); e.preventDefault(); }
   });
-  window.addEventListener('keyup', (e) => held.delete(e.key));
-  window.addEventListener('blur', () => held.clear());
   fr.addEventListener('contextmenu', (e) => { if (state.threeD) e.preventDefault(); });
   fr.addEventListener('auxclick', (e) => e.preventDefault());
   fr.addEventListener('pointerdown', (e) => {
-    let mode = 'move';
-    if (state.threeD) {
-      if (e.altKey) mode = ['orbit', 'pan', 'dolly'][e.button] || 'move';
-      else if (e.button === 0 && held.has('3')) mode = 'orbit';
-      else if (e.button === 0 && held.has('1')) mode = 'pan';
-      else if (e.button === 0 && held.has('2')) mode = 'dolly';
-      else if (e.button !== 0) return;
-    } else if (e.button !== 0) return;
+    // 3D: LMB orbit, MMB pan, RMB dolly. 2D: LMB and MMB move the pattern.
+    let mode;
+    if (state.threeD) mode = ['orbit', 'pan', 'dolly'][e.button];
+    else mode = e.button === 0 || e.button === 1 ? 'move' : null;
+    if (!mode) return;
     e.preventDefault();
     start = { x: e.clientX, y: e.clientY, mode, s: { ...state } };
     fr.setPointerCapture(e.pointerId); fr.classList.add('drag', 'c4d-' + mode);
