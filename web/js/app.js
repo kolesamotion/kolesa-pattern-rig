@@ -145,6 +145,8 @@ function buildUI() {
   // Shift is a switch (0 ↔ 1); the change is animated, ease-in-out 300 ms.
   $('shiftOn').addEventListener('change', (e) => animateShift(e.target.checked ? 1 : 0));
   for (const k of ['gap', 'twist', 'skip', 'draw', 'dropout', 'seed']) makeSlider($('advSliders'), k, k);
+  // 'Vary gaps per ring' only matters with a gap: keep it right under the Gap / Twist sliders.
+  sliders.twist.range.closest('.slider').after($('variation').closest('label'));
   for (const k of CAM_KEYS) makeSlider($('camSliders'), k, k);
   makeSlider($('scaleSlider'), 'scale', 'scale');
   makeSlider($('scaleSlider'), 'rotZ', 'rotZ');

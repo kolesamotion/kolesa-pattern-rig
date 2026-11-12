@@ -143,3 +143,4 @@ body.resizing .ghost { visibility: hidden; }   /* frame is only CSS-scaled while
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 .copyHint { text-align: center; margin: var(--space-2) 0 0; }
 .copyHint kbd { font: 400 12px/16px var(--font-mono); color: var(--foreground); background: var(--muted); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0 5px; }
+#advSliders .check { margin: calc(-1 * var(--space-1_5)) 0 var(--space-4); }
