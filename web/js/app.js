@@ -509,6 +509,138 @@ function downloadSVG() {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
+// ---------- mouse wheel on sliders and number fields ----------
+// Hovering a slider or number field in the panel and turning the wheel changes the value (up = more, Shift = ×10).
+// If the panel itself was scrolling a moment ago, the wheel keeps scrolling, so passing over a control mid-scroll doesn't grab it.
+function nudge(el, n, big) {
+  const min = el.min === '' ? -Infinity : +el.min, max = el.max === '' ? Infinity : +el.max;
+  const st = +el.step || 1;
+  let unit = st;
+  if (el.id === 'width' || el.id === 'height') unit = 10;
+  else if (isFinite(max - min) && (max - min) / st > 200) unit = Math.max(st, Math.round((max - min) / 200 / st) * st);
+  if (big) unit *= 10;
+  const dec = (String(st).split('.')[1] || '').length;
+  const v = Math.min(max, Math.max(min, +(+el.value + n * unit).toFixed(dec)));
+  if (v === +el.value) return;
+  el.value = v;
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+  if (el.type === 'number') el.dispatchEvent(new Event('change', { bubbles: true }));
+}
+function setupWheel() {
+  const panel = document.querySelector('.panel');
+  // custom steppers instead of the native spin box
+  const chev = (d) => `<svg viewBox="0 0 8 5"><path d="${d}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  panel.querySelectorAll('input[type=number]').forEach((inp) => {
+    const w = document.createElement('span'); w.className = 'numWrap';
+    inp.replaceWith(w); w.appendChild(inp);
+    const sp = document.createElement('span'); sp.className = 'spin';
+    sp.innerHTML = `<button type="button" tabindex="-1" data-d="1">${chev('M1 4l3-3 3 3')}</button><button type="button" tabindex="-1" data-d="-1">${chev('M1 1l3 3 3-3')}</button>`;
+    w.appendChild(sp);
+    sp.addEventListener('mousedown', (e) => e.preventDefault());
+    sp.addEventListener('click', (e) => { const btn = e.target.closest('button'); if (btn) nudge(inp, +btn.dataset.d, e.shiftKey); });
+  });
+  let lastScroll = 0, lastWheelTarget = null, acc = 0;
+  panel.addEventListener('scroll', () => { lastScroll = performance.now(); }, { passive: true });
+  panel.addEventListener('wheel', (e) => {
+    const el = e.target.closest('input[type=range], input[type=number]') || e.target.closest('.numWrap')?.querySelector('input');
+    if (!el || el.disabled || e.ctrlKey) { lastWheelTarget = null; return; }
+    if (el !== lastWheelTarget && performance.now() - lastScroll < 300) return;
+    e.preventDefault();
+    if (el !== lastWheelTarget) acc = 0;
+    lastWheelTarget = el;
+    const d = e.deltaY || e.deltaX;
+    let n;
+    if (e.deltaMode !== 0 || Math.abs(d) >= 50) n = -Math.sign(d);
+    else { acc += d; n = -Math.trunc(acc / 50); acc -= -n * 50; }
+    if (!n) return;
+    nudge(el, n, e.shiftKey);
+  }, { passive: false });
+}
+
+// H: keep the angle, reset pan and dolly so the pattern sits in frame as at the start.
+function frameAll() {
+  state.panX = 0; state.panY = 0; state.camDist = DEFAULTS.camDist;
+  update();
+}
+
+// ---------- export ----------
+function toast(msg, actionLabel, onAction) {
+  const el = $('toast'); el.textContent = msg;
+  el.classList.toggle('hasAction', !!actionLabel);
+  if (actionLabel) {
+    const b = document.createElement('button'); b.className = 'act'; b.type = 'button'; b.textContent = actionLabel;
+    b.addEventListener('click', () => { el.classList.remove('show'); onAction(); });
+    el.appendChild(b);
+  }
+  el.classList.add('show');
+  clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), actionLabel ? 5000 : 2600);
+}
+async function copyText(txt) {
+  try { await navigator.clipboard.writeText(txt); return true; } catch {
+    const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select();
+    let ok = false; try { ok = document.execCommand('copy'); } catch { /* ignore */ }
+    ta.remove(); return ok;
+  }
+}
+async function copySVG() { toast((await copyText(buildSVG(state))) ? t('copied') : t('copyFail')); }
+async function shareLink() {
+  const url = location.href.split('#')[0] + '#' + toQuery(state);
+  toast((await copyText(url)) ? t('linkCopied') : t('copyFail'));
+}
+function downloadSVG() {
+  const blob = new Blob([buildSVG(state)], { type: 'image/svg+xml' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `kolesa-pattern-${state.variant}-${state.width}x${state.height}.svg`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// ---------- mouse wheel on sliders and number fields ----------
+// Hovering a slider or number field in the panel and turning the wheel changes the value (up = more, Shift = ×10).
+// If the panel itself was scrolling a moment ago, the wheel keeps scrolling, so passing over a control mid-scroll doesn't grab it.
+function setupWheel() {
+  const panel = document.querySelector('.panel');
+  // custom steppers instead of the native spin box
+  const chev = (d) => `<svg viewBox="0 0 8 5"><path d="${d}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  panel.querySelectorAll('input[type=number]').forEach((inp) => {
+    const w = document.createElement('span'); w.className = 'numWrap';
+    inp.replaceWith(w); w.appendChild(inp);
+    const sp = document.createElement('span'); sp.className = 'spin';
+    sp.innerHTML = `<button type="button" tabindex="-1" data-d="1">${chev('M1 4l3-3 3 3')}</button><button type="button" tabindex="-1" data-d="-1">${chev('M1 1l3 3 3-3')}</button>`;
+    w.appendChild(sp);
+    sp.addEventListener('mousedown', (e) => e.preventDefault());
+    sp.addEventListener('click', (e) => { const btn = e.target.closest('button'); if (btn) nudge(inp, +btn.dataset.d, e.shiftKey); });
+  });
+  let lastScroll = 0, lastWheelTarget = null, acc = 0;
+  panel.addEventListener('scroll', () => { lastScroll = performance.now(); }, { passive: true });
+  panel.addEventListener('wheel', (e) => {
+    const el = e.target.closest('input[type=range], input[type=number]');
+    if (!el || el.disabled || e.ctrlKey) { lastWheelTarget = null; return; }
+    if (el !== lastWheelTarget && performance.now() - lastScroll < 300) return;
+    e.preventDefault();
+    if (el !== lastWheelTarget) acc = 0;
+    lastWheelTarget = el;
+    const d = e.deltaY || e.deltaX;
+    let n;
+    if (e.deltaMode !== 0 || Math.abs(d) >= 50) n = -Math.sign(d);
+    else { acc += d; n = -Math.trunc(acc / 50); acc -= -n * 50; }
+    if (!n) return;
+    const min = el.min === '' ? -Infinity : +el.min, max = el.max === '' ? Infinity : +el.max;
+    const st = +el.step || 1;
+    let unit = st;
+    if (el.id === 'width' || el.id === 'height') unit = 10;
+    else if (isFinite(max - min) && (max - min) / st > 200) unit = Math.max(st, Math.round((max - min) / 200 / st) * st);
+    if (e.shiftKey) unit *= 10;
+    const dec = (String(st).split('.')[1] || '').length;
+    const v = Math.min(max, Math.max(min, +(+el.value + n * unit).toFixed(dec)));
+    if (v === +el.value) return;
+    el.value = v;
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    if (el.type === 'number') el.dispatchEvent(new Event('change', { bubbles: true }));
+  }, { passive: false });
+}
+
 // ---------- user presets ----------
 // Flow: "+" in the Presets header saves the current look as a card at the end of the grid and opens its name
 // for editing (Enter/blur = keep, Esc = default name). Click a card = apply (format is kept, like brand presets).
@@ -591,5 +723,6 @@ lang = store.get('kp.lang', 'ru');
 if (!LANGS.includes(lang)) lang = 'ru';
 if (location.hash.length > 1) state = fromQuery(location.hash.slice(1));
 buildUI();
+setupWheel();
 applyLang();
 update();
