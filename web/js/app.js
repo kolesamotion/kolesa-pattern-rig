@@ -141,10 +141,10 @@ function buildUI() {
     $(k).addEventListener('change', (e) => { state[k] = +e.target.value || state[k]; clampAll(state); update(); });
   }
 
-  for (const k of ['rings', 'r0', 'step', 'thickness', 'gap', 'twist']) makeSlider($('geomSliders'), k, k);
+  for (const k of ['rings', 'r0', 'step', 'thickness']) makeSlider($('geomSliders'), k, k);
   // Shift is a switch (0 ↔ 1); the change is animated, ease-in-out 300 ms.
   $('shiftOn').addEventListener('change', (e) => animateShift(e.target.checked ? 1 : 0));
-  for (const k of ['skip', 'draw', 'dropout', 'seed']) makeSlider($('advSliders'), k, k);
+  for (const k of ['gap', 'twist', 'skip', 'draw', 'dropout', 'seed']) makeSlider($('advSliders'), k, k);
   for (const k of CAM_KEYS) makeSlider($('camSliders'), k, k);
   makeSlider($('scaleSlider'), 'scale', 'scale');
   makeSlider($('scaleSlider'), 'rotZ', 'rotZ');
