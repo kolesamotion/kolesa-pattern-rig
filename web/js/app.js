@@ -131,7 +131,9 @@ function buildUI() {
     $(k).addEventListener('change', (e) => { state[k] = +e.target.value || state[k]; clampAll(state); update(); });
   }
 
-  for (const k of ['rings', 'shift', 'step', 'thickness', 'gap', 'twist']) makeSlider($('geomSliders'), k, k);
+  for (const k of ['rings', 'step', 'thickness', 'gap', 'twist']) makeSlider($('geomSliders'), k, k);
+  // Shift is a switch (0 ↔ 1); the change is animated, ease-in-out 300 ms.
+  $('shiftOn').addEventListener('change', (e) => animateShift(e.target.checked ? 1 : 0));
   for (const k of ['r0', 'skip', 'draw', 'dropout', 'seed']) makeSlider($('advSliders'), k, k);
   for (const k of CAM_KEYS) makeSlider($('camSliders'), k, k);
   makeSlider($('scaleSlider'), 'scale', 'scale');
@@ -208,11 +210,28 @@ function applyLang() {
 }
 
 // ---------- render ----------
+let shiftRaf = 0, shiftTarget = null;
+function animateShift(to) {
+  cancelAnimationFrame(shiftRaf);
+  const from = state.shift, t0 = performance.now(), D = 300;
+  const ease = (t) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);   // ease-in-out
+  shiftTarget = to;
+  let last = from;
+  const step = (now) => {
+    if (state.shift !== last) { shiftRaf = 0; shiftTarget = null; update(); return; }   // changed elsewhere (reset, variant)
+    const t = Math.min(1, (now - t0) / D);
+    state.shift = last = from + (to - from) * ease(t);
+    if (t < 1) { shiftRaf = requestAnimationFrame(step); render(); }
+    else { state.shift = to; shiftRaf = 0; shiftTarget = null; update(); }
+  };
+  shiftRaf = requestAnimationFrame(step);
+}
+
 let hashTimer, renderRaf = 0, fitKey = '';
 // Batches all changes into one render per animation frame (high-rate mice fire many events per frame).
 function update() { if (!renderRaf) renderRaf = requestAnimationFrame(render); }
 function render() {
-  renderRaf = 0;
+  cancelAnimationFrame(renderRaf); renderRaf = 0;
   const s = state;
   $('frame').innerHTML = buildSVG(s);
   for (const [k, { range, num }] of Object.entries(sliders)) {
@@ -221,6 +240,7 @@ function render() {
     range.value = v;
   }
   for (const k of BOOL_KEYS) $(k).checked = !!s[k];
+  $('shiftOn').checked = shiftTarget != null ? shiftTarget === 1 : s.shift > 0;
   syncFormat();
   $('variants').querySelectorAll('button').forEach((b) => b.classList.toggle('is-active', b.dataset.v === s.variant));
   $('scaleMode').querySelectorAll('button').forEach((b) => b.classList.toggle('is-active', b.dataset.v === s.scaleMode));
