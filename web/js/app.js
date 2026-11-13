@@ -289,7 +289,7 @@ function applyLang() {
     `<li><span>${t(k)}</span><span>${alts.map((a) => `<kbd>${tr(a)}</kbd>`).join(` ${t('k_or')} `)}</span></li>`).join('');
   // Common controls (both modes) in "Size & position"; Camera lists only what is 3D-specific.
   $('posKeys').innerHTML = keyList([
-    ['k_move', 'СКМ', `${alt} + ЛКМ`], ['k_move2d', 'ЛКМ'], ['k_zoom', 'Колесо', 'ПКМ'],
+    ['k_move', 'СКМ', `${alt} + ЛКМ`, `${t('k_space')} + ЛКМ`], ['k_move2d', 'ЛКМ'], ['k_zoom', 'Колесо', 'ПКМ'],
     ['k_roll', `${mod} + ЛКМ ↔`, `${mod} + Колесо`], ['k_rings', `${mod} + ЛКМ ↕`], ['k_frame', 'H'],
   ]) + keyList([['k_orbit', 'ЛКМ']]).replace('<li>', '<li class="cam3d">');   // orbit row only in 3D
   renderUserPresets();
@@ -506,12 +506,19 @@ function renderGhost() {
 // Mode-specific: LMB = orbit in 3D, move in 2D.
 function setupDrag() {
   const fr = $('frame');
-  let start = null;
+  let start = null, space = false;
   const typing = () => { const a = document.activeElement; return !!a && (/SELECT|TEXTAREA/.test(a.tagName) || (a.tagName === 'INPUT' && /^(text|number|search|email|url)$/.test(a.type)) || a.isContentEditable); };   // switches / sliders don't block H
   window.addEventListener('keydown', (e) => {
     if (typing() || e.metaKey || e.ctrlKey) return;
     if (e.key === 'h' || e.key === 'H' || e.code === 'KeyH') { frameAll(); e.preventDefault(); }   // both modes
+    if (e.code === 'Space') {   // hold Space + LMB = middle button (3D pan / 2D move); no page scroll / button press
+      space = true; fr.classList.add('space');
+      if (!/BUTTON|INPUT|SELECT|SUMMARY|A/.test(document.activeElement?.tagName || '')) e.preventDefault();
+    }
   });
+  const spaceUp = () => { space = false; fr.classList.remove('space'); };
+  window.addEventListener('keyup', (e) => { if (e.code === 'Space') spaceUp(); });
+  window.addEventListener('blur', spaceUp);
   fr.addEventListener('contextmenu', (e) => e.preventDefault());   // RMB drag is used in both modes
   fr.addEventListener('auxclick', (e) => e.preventDefault());
   fr.addEventListener('pointerdown', (e) => {
@@ -519,7 +526,8 @@ function setupDrag() {
     // Mode-specific: LMB = orbit in 3D, move in 2D.
     let mode;
     if (e.button === 0 && (e.ctrlKey || e.metaKey)) mode = 'ctrl';   // both modes: axis decided on first move
-    else if (state.threeD) mode = e.button === 0 && e.altKey ? 'pan' : ['orbit', 'pan', 'zoom'][e.button];   // Alt + drag = middle button
+    else if (e.button === 0 && (e.altKey || space)) mode = state.threeD ? 'pan' : 'move';   // Alt / Space + drag = middle button
+    else if (state.threeD) mode = ['orbit', 'pan', 'zoom'][e.button];
     else mode = ['move', 'move', 'zoom'][e.button];
     if (!mode) return;
     e.preventDefault();
