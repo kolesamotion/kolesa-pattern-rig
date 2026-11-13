@@ -185,7 +185,9 @@ function buildUI() {
   for (const k of ['gap', 'twist', 'skip', 'draw', 'dropout', 'seed']) makeSlider($('advSliders'), k, k);
   // 'Vary gaps per ring' only matters with a gap: keep it right under the Gap / Twist sliders.
   sliders.twist.range.closest('.slider').after($('variation').closest('label'));
-  for (const k of CAM_KEYS) makeSlider($('camSliders'), k, k);
+  // No camera-distance slider: it fought with Scale (both 'zoom'), and the rings are flat anyway. camDist stays fixed
+  // at the default (reset by 'Reset camera' / H); size is always Scale, in 2D and 3D alike.
+  for (const k of ['rotX', 'rotY']) makeSlider($('camSliders'), k, k);
   makeSlider($('scaleSlider'), 'scale', 'scale');
   { const sl = sliders.scale.range.closest('.slider'); sl.classList.add('withAside'); sl.appendChild($('scaleMode')); }   // small mode switch right of «Масштаб»
   makeSlider($('scaleSlider'), 'rotZ', 'rotZ');
@@ -485,7 +487,7 @@ function setupDrag() {
     // Mode-specific: LMB = orbit in 3D, move in 2D.
     let mode;
     if (e.button === 0 && (e.ctrlKey || e.metaKey)) mode = 'ctrl';   // both modes: axis decided on first move
-    else if (state.threeD) mode = ['orbit', 'pan', 'dolly'][e.button];
+    else if (state.threeD) mode = ['orbit', 'pan', 'zoom'][e.button];
     else mode = ['move', 'move', 'zoom'][e.button];
     if (!mode) return;
     e.preventDefault();
@@ -532,8 +534,7 @@ function setupDrag() {
   fr.addEventListener('wheel', (e) => {
     e.preventDefault();
     if (e.ctrlKey || e.metaKey) state.rotZ = ((state.rotZ - e.deltaY * 0.1 + 540) % 360) - 180;   // 3D + Ctrl/Cmd: roll
-    else if (state.threeD) state.camDist = state.camDist * Math.exp(e.deltaY * 0.0015);   // 3D: dolly
-    else state.scale = state.scale * Math.exp(-e.deltaY * 0.0015);                   // 2D: scale
+    else state.scale = state.scale * Math.exp(-e.deltaY * 0.0015);                   // both modes: scale
     clampAll(state); update();
   }, { passive: false });
 }
