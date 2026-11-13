@@ -92,11 +92,16 @@ function makeSlider(parent, key, labelKey) {
   sliders[key] = { range, num };
 }
 
+// Design-system names (ds/kds.css palette) of the swatch colours, shown on hover. Colours not in the DS show only HEX.
+const DS_NAMES = { '#0065DB': 'blue-600', '#0077FF': 'brand-blue · blue-500', '#004799': 'blue-800', '#001833': 'blue-990',
+  '#C2DEFF': 'blue-30', '#FFFFFF': 'white', '#1D2129': 'brand-neutral · neutral-990', '#1F89FF': 'blue-400', '#85BEFF': 'blue-100',
+  '#0056B8': 'blue-700', '#61ACFF': 'blue-200' };
+const swTitle = (c) => DS_NAMES[c] ? `${DS_NAMES[c]}  ${c}` : c;
 function swatches(parent, colors, key, cls = '') {
   parent.innerHTML = '';
   for (const c of colors) {
     const b = document.createElement('button');
-    b.className = 'sw ' + cls; b.style.background = c; b.title = c; b.dataset.c = c;
+    b.className = 'sw ' + cls; b.style.background = c; b.title = swTitle(c); b.setAttribute('aria-label', swTitle(c)); b.dataset.c = c;
     b.addEventListener('click', () => { state[key] = c; update(); });
     parent.appendChild(b);
   }
@@ -215,6 +220,7 @@ function buildUI() {
   GRADS.forEach((g) => {
     const b = document.createElement('button');
     b.className = 'sw'; b.style.background = `linear-gradient(${g.a + 90}deg, ${g.c.join(',')})`;
+    b.title = g.c.map((c) => DS_NAMES[c] ? DS_NAMES[c].split(' · ').pop() : c).join(' → '); b.setAttribute('aria-label', b.title);
     b.addEventListener('click', () => { state.grad = [...g.c]; state.gradAngle = g.a; state.gradient = true; update(); });
     gs.appendChild(b);
   });
