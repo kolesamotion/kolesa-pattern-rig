@@ -55,15 +55,15 @@ section::before { content: ''; position: absolute; top: 0; left: calc(-1 * var(-
 .presetCard { position: relative; }
 /* User presets: delete on hover, rename in place */
 .presetCard .del { position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%;
-  background: rgb(29 33 41 / 0.7); color: #fff; cursor: pointer; opacity: 0; transition: opacity var(--duration-fast) var(--ease-out); }
+  background: var(--scrim); color: var(--white); cursor: pointer; opacity: 0; transition: opacity var(--duration-fast) var(--ease-out); }
 .presetCard .del svg { width: 12px; height: 12px; }
 .presetCard:hover .del, .presetCard:focus-within .del { opacity: 1; }
-.presetCard .del:hover { background: var(--destructive, #e5484d); }
+.presetCard .del:hover { background: var(--destructive); }
 .presetCard .nameEdit { height: 20px; padding: 0 4px; margin: -2px 0; font-size: 12px; border-radius: var(--radius-sm); }
 .presetCard.fresh .thumb { animation: kp-pop var(--duration-base, 200ms) var(--ease-out); }
 @keyframes kp-pop { from { transform: scale(0.92); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .presetCard.fresh .thumb { animation: none; } }
-.presetCard:focus-visible .thumb { box-shadow: 0 0 0 2px var(--sidebar), 0 0 0 4px color-mix(in oklch, var(--ring) 50%, transparent); }
+.presetCard:focus-visible .thumb { box-shadow: 0 0 0 2px var(--sidebar), 0 0 0 4px var(--ring); }
 
 /* Aspect-ratio slider (Figma Temp 21:8904): label · track · proportion icon · ratio */
 .ratioRow { display: grid; grid-template-columns: auto 1fr 64px; align-items: center; gap: var(--space-2) var(--space-3); min-height: 32px; }
@@ -78,7 +78,7 @@ select.kds-input { appearance: none; padding-right: 32px; cursor: pointer;
 :is([data-theme="dark"], .dark) select.kds-input {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' fill='none' stroke='%23a3abb8' stroke-width='1.5'/%3E%3C/svg%3E");
   background-repeat: no-repeat; background-position: right 10px center; }
-select.kds-input option { color: #1d2129; }
+select.kds-input option { color: var(--brand-neutral); }
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-top: var(--space-3); }
 
 /* Sliders = scrub bars (Figma Temp 36:339). Neutral fills are the foreground colour at low opacity,
@@ -86,21 +86,21 @@ select.kds-input option { color: #1d2129; }
 .slider { margin-bottom: var(--space-2); }
 .slider.withAside { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: var(--space-2); }
 .scrub { --f: .5; --thumb: 3px; --inset: 6px; position: relative; height: 36px; border-radius: var(--radius-md); overflow: hidden;
-  background: color-mix(in oklch, var(--foreground) 5%, transparent); }
+  background: var(--fill); }
 .scrubFill { position: absolute; inset: 0 auto 0 0; width: calc(var(--inset) + var(--thumb) / 2 + (100% - 2 * var(--inset) - var(--thumb)) * var(--f));
-  background: color-mix(in oklch, var(--foreground) 9%, transparent); transition: background var(--duration-fast) var(--ease-out); }
+  background: var(--fill-2); transition: background var(--duration-fast) var(--ease-out); }
 .scrubThumb { position: absolute; top: 8px; width: var(--thumb); height: 20px; border-radius: 99px; left: calc(var(--inset) + (100% - 2 * var(--inset) - var(--thumb)) * var(--f));
   background: var(--foreground); opacity: .85; pointer-events: none; transition: opacity var(--duration-fast) var(--ease-out); }
 .scrubTicks { position: absolute; inset: 14px 0 auto; height: 8px; opacity: 0; pointer-events: none; transition: opacity var(--duration-fast) var(--ease-out);
   background: linear-gradient(to right, transparent calc(25% - .5px), var(--tick) 0 calc(25% + .5px), transparent 0 calc(50% - .5px), var(--tick) 0 calc(50% + .5px),
     transparent 0 calc(75% - .5px), var(--tick) 0 calc(75% + .5px), transparent 0);
-  --tick: color-mix(in oklch, var(--foreground) 15%, transparent); }
+  --tick: var(--fill-4); }
 .scrub .name { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); max-width: calc(100% - 110px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   font: 400 13px/16px var(--font-sans); color: var(--muted-foreground); pointer-events: none; transition: color var(--duration-fast) var(--ease-out); }
 .scrubVal { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); z-index: 2; display: flex; align-items: baseline;
   font: 400 12px/16px var(--font-mono); color: var(--muted-foreground); font-variant-numeric: tabular-nums; transition: color var(--duration-fast) var(--ease-out); }
 .scrubNum { all: unset; field-sizing: content; min-width: 1ch; max-width: 9ch; text-align: right; font: inherit; color: inherit; cursor: text; border-radius: 4px; padding: 0 2px; -moz-appearance: textfield; }
-.scrubNum:hover, .scrubNum:focus { background: color-mix(in oklch, var(--foreground) 8%, transparent); }
+.scrubNum:hover, .scrubNum:focus { background: var(--fill-3); }
 .scrubNum:focus { color: var(--foreground); }
 .scrubUnit { margin-left: 1px; }
 /* the real control: invisible range across the whole bar */
@@ -108,46 +108,46 @@ select.kds-input option { color: #1d2129; }
 .scrub input[type=range]::-webkit-slider-runnable-track { height: 100%; background: none; }
 .scrub input[type=range]::-webkit-slider-thumb { width: calc(var(--thumb) + 2 * var(--inset)); height: 36px; margin-top: 0; }
 .scrub input[type=range]::-moz-range-thumb { width: calc(var(--thumb) + 2 * var(--inset)); height: 36px; }
-.scrub:hover .scrubFill, .scrub:active .scrubFill { background: color-mix(in oklch, var(--foreground) 13%, transparent); }
+.scrub:hover .scrubFill, .scrub:active .scrubFill { background: var(--fill-3); }
 .scrub:hover .scrubTicks, .scrub:active .scrubTicks { opacity: 1; }
 .scrub:hover .scrubThumb, .scrub:active .scrubThumb { opacity: 1; }
 .scrub:hover .name, .scrub:active .name, .scrub:hover .scrubVal, .scrub:active .scrubVal { color: var(--foreground); }
-.scrub:has(input[type=range]:focus-visible) { box-shadow: inset 0 0 0 2px color-mix(in oklch, var(--ring) 55%, transparent); }
+.scrub:has(input[type=range]:focus-visible) { box-shadow: var(--focus-inset); }
 @media (prefers-reduced-motion: reduce) { .scrub * { transition: none !important; } }
 /* Range: flat track (no outline), filled part = --p (set from JS), plain thumb */
 input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 16px; margin: 0; background: transparent; cursor: pointer; --p: 50%; }
 input[type=range]::-webkit-slider-runnable-track { height: 4px; border: 0; border-radius: 999px;
-  background: linear-gradient(to right, var(--primary) 0 var(--p), var(--fill, var(--muted)) var(--p) 100%); }
-input[type=range]::-moz-range-track { height: 4px; border: 0; border-radius: 999px; background: var(--fill, var(--muted)); }
+  background: linear-gradient(to right, var(--primary) 0 var(--p), var(--fill-3) var(--p) 100%); }
+input[type=range]::-moz-range-track { height: 4px; border: 0; border-radius: 999px; background: var(--fill-3); }
 input[type=range]::-moz-range-progress { height: 4px; border-radius: 999px; background: var(--primary); }
 input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; margin-top: -5px; border: 0; border-radius: 50%; background: var(--primary);
   transition: box-shadow var(--duration-fast) var(--ease-out); }
 input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border: 0; border-radius: 50%; background: var(--primary); }
-input[type=range]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 4px color-mix(in oklch, var(--primary) 18%, transparent); }
+input[type=range]:hover::-webkit-slider-thumb { box-shadow: var(--focus); }
 input[type=range]:focus-visible { outline: none; }
-input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px color-mix(in oklch, var(--ring) 35%, transparent); }
+input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: var(--focus); }
 
 /* Toggle rows match the scrub bars: same 36px plate, 13px muted label, foreground on hover.
    Switch is neutral (foreground tints) instead of brand blue, like the slider handle. */
 .check { position: relative; display: flex; flex-direction: row-reverse; justify-content: space-between; align-items: center; gap: var(--space-3);
   height: 36px; margin: 0 0 var(--space-2); padding: 0 9px 0 14px; border-radius: var(--radius-md); cursor: pointer;
-  background: color-mix(in oklch, var(--foreground) 5%, transparent); color: var(--muted-foreground);
+  background: var(--fill); color: var(--muted-foreground);
   font: 400 13px/16px var(--font-sans); transition: background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out); }
 .check > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.check:hover { background: color-mix(in oklch, var(--foreground) 9%, transparent); color: var(--foreground); }
+.check:hover { background: var(--fill-2); color: var(--foreground); }
 .check:has(.switch:checked) { color: var(--foreground); }
 .switch { appearance: none; -webkit-appearance: none; flex: none; position: relative; width: 30px; height: 18px; margin: 0; border-radius: 999px; cursor: pointer;
-  background: color-mix(in oklch, var(--foreground) 14%, transparent); transition: background var(--duration-fast) var(--ease-out); }
+  background: var(--fill-3); transition: background var(--duration-fast) var(--ease-out); }
 .switch::before { content: ''; position: absolute; top: 3px; left: 3px; width: 12px; height: 12px; border-radius: 50%; background: var(--foreground); opacity: .55;
   transition: transform var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out), opacity var(--duration-fast) var(--ease-out); }
-.switch:checked { background: color-mix(in oklch, var(--foreground) 42%, transparent); }
-.check:hover .switch:checked { background: color-mix(in oklch, var(--foreground) 52%, transparent); }
+.switch:checked { background: var(--on); }
+.check:hover .switch:checked { background: var(--on-hover); }
 .switch:checked::before { transform: translateX(12px); background: var(--sidebar); opacity: 1; }
-.check:hover .switch:not(:checked) { background: color-mix(in oklch, var(--foreground) 20%, transparent); }
+.check:hover .switch:not(:checked) { background: var(--fill-4); }
 .check:hover .switch:not(:checked)::before { opacity: .8; }
 #tsRatioText { color: var(--muted-foreground); font: 400 12px/16px var(--font-mono); font-variant-numeric: tabular-nums; margin-left: 4px; }
 .switch:focus-visible { outline: none; }
-.check:has(.switch:focus-visible) { box-shadow: inset 0 0 0 2px color-mix(in oklch, var(--ring) 55%, transparent); }
+.check:has(.switch:focus-visible) { box-shadow: var(--focus-inset); }
 @media (prefers-reduced-motion: reduce) { .check, .switch, .switch::before { transition: none; } }
 details { margin-top: var(--space-3); }
 summary { cursor: pointer; color: var(--muted-foreground); font-weight: 500; margin-bottom: var(--space-3); }
@@ -166,8 +166,8 @@ summary:hover { color: var(--foreground); }
 .colorRow { display: grid; grid-template-columns: 1fr 172px; align-items: center; gap: var(--space-2) var(--space-3); margin-bottom: var(--space-4); }
 .colorRow .swatches { grid-column: 1 / -1; }
 .swatches { display: flex; gap: var(--space-1_5); flex-wrap: wrap; }
-.sw { width: 24px; height: 24px; border-radius: 50%; border: 1px solid color-mix(in oklch, var(--foreground) 15%, transparent); cursor: pointer; padding: 0; transition: box-shadow var(--duration-fast) var(--ease-out); }
-.sw:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 30%, transparent); }
+.sw { width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--fill-3); cursor: pointer; padding: 0; transition: box-shadow var(--duration-fast) var(--ease-out); }
+.sw:focus-visible { outline: none; box-shadow: var(--focus); }
 .sw.on { box-shadow: 0 0 0 2px var(--sidebar), 0 0 0 4px var(--ring); }
 .grads .sw { width: 44px; border-radius: var(--radius-sm); }
 input[type=color] { width: 32px; height: 32px; border: 1px solid var(--input); border-radius: var(--radius-md); padding: 3px; background: transparent; cursor: pointer; }
@@ -192,8 +192,8 @@ input[type=color] { width: 32px; height: 32px; border: 1px solid var(--input); b
   opacity: 0; transform: translateY(4px); pointer-events: none; transition: opacity var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out); }
 .helpTip:hover .tip, .helpTip:focus-visible .tip { opacity: 1; transform: none; }
 :is([data-theme="dark"], .dark) .helpTip .tip { background: var(--white); color: var(--brand-neutral); }
-.helpTip .tip kbd { font: 400 12px/16px var(--font-mono); background: rgb(255 255 255 / 0.15); border-radius: var(--radius-sm); padding: 0 4px; }
-:is([data-theme="dark"], .dark) .helpTip .tip kbd { background: rgb(29 33 41 / 0.1); }
+.helpTip .tip kbd { font: 400 12px/16px var(--font-mono); background: color-mix(in oklch, var(--white) 15%, transparent); border-radius: var(--radius-sm); padding: 0 4px; }
+:is([data-theme="dark"], .dark) .helpTip .tip kbd { background: color-mix(in oklch, var(--brand-neutral) 10%, transparent); }
 
 /* Stage */
 .stage { position: relative; background: var(--muted); display: flex; align-items: center; justify-content: center; padding: 40px; overflow: hidden; }
@@ -218,7 +218,7 @@ body.resizing .ghost { visibility: hidden; }   /* frame is only CSS-scaled while
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 .toast.show.hasAction { pointer-events: auto; }
 .toast { display: flex; align-items: center; gap: var(--space-3); }
-.toast .act { border: 0; background: none; padding: 0; font: inherit; font-weight: 600; color: var(--primary-on-dark, #61acff); cursor: pointer; }
+.toast .act { border: 0; background: none; padding: 0; font: inherit; font-weight: 600; color: var(--blue-200); cursor: pointer; }
 :is([data-theme="dark"], .dark) .toast .act { color: var(--primary); }
 
 @media (max-width: 760px) {
@@ -232,11 +232,8 @@ body.resizing .ghost { visibility: hidden; }   /* frame is only CSS-scaled while
 
 /* Panel controls without outlines: soft filled fields instead of borders (focus ring stays) */
 .panel .kds-input, .panel .kds-btn--outline, .panel input[type=color] { border-color: transparent; background-color: var(--fill); }
-.panel .kds-btn--outline:hover, .panel .kds-input:hover:not(:focus-visible) { background-color: var(--fill-hover); }
+.panel .kds-btn--outline:hover, .panel .kds-input:hover:not(:focus-visible) { background-color: var(--fill-2); }
 .panel .kds-input:focus-visible { border-color: transparent; }
-.panel { --fill: color-mix(in srgb, var(--foreground) 8%, var(--sidebar)); --fill-hover: color-mix(in srgb, var(--foreground) 12%, var(--sidebar)); }
-.panel .kds-input, .panel .kds-btn--outline, .panel input[type=color] { background-color: color-mix(in srgb, var(--foreground) 5%, var(--sidebar)); }
-.panel .kds-btn--outline:hover, .panel .kds-input:hover:not(:focus-visible) { background-color: color-mix(in srgb, var(--foreground) 9%, var(--sidebar)); }
 
 /* Number fields: native spin arrows hidden; our own two chevrons (no background) appear on hover/focus. */
 .panel input[type=number]::-webkit-inner-spin-button,
@@ -255,17 +252,17 @@ body.resizing .ghost { visibility: hidden; }   /* frame is only CSS-scaled while
 
 /* Colour field, Figma-style: small swatch (opens the picker) + always-visible editable HEX. */
 .colorField { display: flex; align-items: center; gap: 8px; height: var(--control-sm, 32px); padding: 0 8px; border-radius: var(--radius-md);
-  background-color: color-mix(in srgb, var(--foreground) 5%, var(--sidebar)); min-width: 0; }
-.colorField:hover { background-color: color-mix(in srgb, var(--foreground) 9%, var(--sidebar)); }
-.colorField:focus-within { box-shadow: 0 0 0 2px color-mix(in oklch, var(--ring) 35%, transparent); }
+  background-color: var(--fill); min-width: 0; }
+.colorField:hover { background-color: var(--fill-2); }
+.colorField:focus-within { box-shadow: var(--focus); }
 .panel .colorField input[type=color] { flex: none; width: 16px; height: 16px; padding: 0; border: 0; border-radius: 3px; background: none; cursor: pointer; }
 .colorField input[type=color]::-webkit-color-swatch-wrapper { padding: 0; }
-.colorField input[type=color]::-webkit-color-swatch { border: 0; border-radius: 3px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--foreground) 14%, transparent); }
+.colorField input[type=color]::-webkit-color-swatch { border: 0; border-radius: 3px; box-shadow: inset 0 0 0 1px var(--fill-3); }
 .colorField input[type=color]::-moz-color-swatch { border: 0; border-radius: 3px; }
 .panel .colorField .hex { all: unset; flex: 1; min-width: 0; font: inherit; font-size: 13px; font-variant-numeric: tabular-nums; letter-spacing: .02em; color: var(--foreground); text-align: left; text-transform: uppercase; cursor: text; }
 .swBox { flex: none; display: block; width: 16px; height: 16px; border-radius: 3px; line-height: 0;
-  background: repeating-conic-gradient(#d4d4d4 0 25%, #fff 0 50%) 0 0 / 8px 8px; }
-.colorField .sep { flex: none; align-self: stretch; width: 1px; margin: 6px 0; background: color-mix(in srgb, var(--foreground) 12%, transparent); }
+  background: repeating-conic-gradient(var(--neutral-30) 0 25%, var(--white) 0 50%) 0 0 / 8px 8px; }
+.colorField .sep { flex: none; align-self: stretch; width: 1px; margin: 6px 0; background: var(--fill-3); }
 .panel .colorField .alpha { all: unset; width: 3ch; font: inherit; font-size: 13px; font-variant-numeric: tabular-nums; text-align: right; color: var(--foreground); cursor: text; -moz-appearance: textfield; }
 .panel .colorField .alpha::-webkit-inner-spin-button, .panel .colorField .alpha::-webkit-outer-spin-button { -webkit-appearance: none; display: none; }
 .colorField .pct { flex: none; font-size: 13px; color: var(--muted-foreground); margin-left: -4px; }
@@ -282,10 +279,10 @@ body.resizing .ghost { visibility: hidden; }   /* frame is only CSS-scaled while
 .helpTip .tip .keys li > span:last-child { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 4px; }
 .helpTip .tip .keys li > span:first-child { white-space: nowrap; }
 .helpTip .tip .keys li > span:first-child { opacity: .75; }
-.helpTip .tip .keys kbd { color: inherit; background: rgb(255 255 255 / 0.15); border: 0; }
-:is([data-theme="dark"], .dark) .helpTip .tip .keys kbd { background: rgb(29 33 41 / 0.1); }
-.helpTip .tip .keys li.note { display: block; margin-top: 4px; padding-top: 6px; border-top: 1px solid rgb(255 255 255 / 0.12); opacity: .75; }
-:is([data-theme="dark"], .dark) .helpTip .tip .keys li.note { border-top-color: rgb(29 33 41 / 0.12); }
+.helpTip .tip .keys kbd { color: inherit; background: color-mix(in oklch, var(--white) 15%, transparent); border: 0; }
+:is([data-theme="dark"], .dark) .helpTip .tip .keys kbd { background: color-mix(in oklch, var(--brand-neutral) 10%, transparent); }
+.helpTip .tip .keys li.note { display: block; margin-top: 4px; padding-top: 6px; border-top: 1px solid color-mix(in oklch, var(--white) 12%, transparent); opacity: .75; }
+:is([data-theme="dark"], .dark) .helpTip .tip .keys li.note { border-top-color: color-mix(in oklch, var(--brand-neutral) 12%, transparent); }
 
 /* Small segmented switch right of the Scale bar (format-relative / px). */
 .miniSeg { display: inline-flex; height: 24px; padding: 2px; gap: 0; width: auto; margin: 0; border-radius: var(--radius-md); }
@@ -294,18 +291,29 @@ body.resizing .ghost { visibility: hidden; }   /* frame is only CSS-scaled while
 /* Preset names are not shown under the cards: the name appears over the thumbnail on hover / keyboard focus
    (and stays while a user preset is being renamed). */
 .presetCard .name, .presetCard .nameEdit { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1; margin: 0; }
-.presetCard .name { padding: 14px 8px 6px; border-radius: 0 0 var(--radius-md) var(--radius-md); color: #fff;
-  background: linear-gradient(to top, rgb(16 19 26 / 0.72), rgb(16 19 26 / 0)); opacity: 0; transform: translateY(2px);
+.presetCard .name { padding: 14px 8px 6px; border-radius: 0 0 var(--radius-md) var(--radius-md); color: var(--white);
+  background: linear-gradient(to top, var(--scrim), transparent); opacity: 0; transform: translateY(2px);
   transition: opacity var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out); }
 .presetCard:hover .name, .presetCard:focus-visible .name, .presetCard:focus-within .name { opacity: 1; transform: none; }
-.presetCard:hover .name, .presetCard.is-active .name { color: #fff; }
+.presetCard:hover .name, .presetCard.is-active .name { color: var(--white); }
 .presetCard .nameEdit { left: 4px; right: 4px; bottom: 4px; height: 22px; margin: 0; background: var(--sidebar); }
 
 /* % / px switch next to the Scale bar: same 36px height, plate and radius as the scrub bar. */
-.slider.withAside .miniSeg { height: 36px; padding: 3px; border-radius: var(--radius-md); background: color-mix(in oklch, var(--foreground) 5%, transparent); }
+.slider.withAside .miniSeg { height: 36px; padding: 3px; border-radius: var(--radius-md); background: var(--fill); }
 .slider.withAside .miniSeg .kds-tabs__trigger { height: 30px; min-width: 36px; font-size: 13px; border-radius: calc(var(--radius-md) - 3px); }
 
 /* Language dropdown in the header: same soft plate as the panel controls, compact. */
 .panel select.langSel { width: auto; height: 32px; padding: 0 28px 0 10px; border-radius: var(--radius-md); font: 500 12px/16px var(--font-sans);
-  background-position: right 8px center; background-color: color-mix(in oklch, var(--foreground) 5%, transparent); border-color: transparent; }
-.panel select.langSel:hover { background-color: color-mix(in oklch, var(--foreground) 9%, transparent); }
+  background-position: right 8px center; background-color: var(--fill); border-color: transparent; }
+.panel select.langSel:hover { background-color: var(--fill-2); }
+
+/* Panel palette. Every UI colour is a DS token (ds/kds.css): one neutral ladder per theme plus --input,
+   --ring, --primary, --destructive. No ad-hoc opacities.
+   fill   = control plate        fill-2 = plate hover / scrub fill
+   fill-3 = scrub fill hover, switch track, dividers, slider track      fill-4 = ticks, switch track hover */
+.panel { --fill: var(--neutral-15); --fill-2: var(--neutral-25); --fill-3: var(--neutral-30); --fill-4: var(--neutral-40);
+  --on: var(--input); --on-hover: var(--neutral-300);
+  --focus: 0 0 0 3px color-mix(in oklch, var(--ring) 30%, transparent); --focus-inset: inset 0 0 0 2px var(--ring);
+  --scrim: color-mix(in oklch, var(--brand-neutral) 72%, transparent); }
+:is([data-theme="dark"], .dark) .panel { --fill: var(--neutral-900); --fill-2: var(--neutral-800); --fill-3: var(--neutral-700); --fill-4: var(--neutral-600);
+  --on: var(--input); --on-hover: var(--neutral-200); }
