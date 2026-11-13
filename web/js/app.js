@@ -77,8 +77,13 @@ function makeSlider(parent, key, labelKey) {
   const [min, max, step] = LIMITS[key], smax = SLIDER_MAX[key] ?? max;
   const el = document.createElement('div');
   el.className = 'slider';
-  el.innerHTML = `<div class="name"><label class="kds-label" data-t="${labelKey}"></label></div>` +
-    `<input type="range" min="${min}" max="${smax}" step="${step}"><input class="kds-input" type="number" min="${min}" max="${max}" step="${step}" data-unit="${UNITS[key] || ''}">`;
+  // Scrub bar (Figma Temp 36:339): label inside on the left, value on the right, fill + thin handle;
+  // an invisible native range on top does the dragging/keyboard, the value is an inline number field.
+  const u = UNITS[key] ? `<span class="scrubUnit">${UNITS[key]}</span>` : '';
+  el.innerHTML = `<div class="scrub"><span class="scrubFill"></span><span class="scrubTicks"></span><span class="scrubThumb"></span>` +
+    `<label class="name" data-t="${labelKey}"></label>` +
+    `<input type="range" min="${min}" max="${smax}" step="${step}">` +
+    `<span class="scrubVal"><input class="scrubNum" type="number" min="${min}" max="${max}" step="${step}">${u}</span></div>`;
   parent.appendChild(el);
   const [range, num] = el.querySelectorAll('input');
   const onInput = (v) => { state[key] = Math.min(max, Math.max(min, +v)); linkThickness(key); update(); };
@@ -116,11 +121,11 @@ function buildUI() {
   });
   // languages
   for (const l of LANGS) {
-    const b = document.createElement('button');
-    b.className = 'kds-tabs__trigger'; b.textContent = l === 'kk' ? 'kz' : l; b.dataset.l = l;
-    b.addEventListener('click', () => { lang = l; store.set('kp.lang', l); applyLang(); });
-    $('langs').appendChild(b);
+    const o = document.createElement('option');
+    o.value = l; o.textContent = (l === 'kk' ? 'kz' : l).toUpperCase();
+    $('langs').appendChild(o);
   }
+  $('langs').addEventListener('change', (e) => { lang = e.target.value; store.set('kp.lang', lang); applyLang(); e.target.blur(); });
   // variants
   // presets: cards with a live thumbnail of each brand variant in the current format
   for (const v of Object.keys(VARIANTS)) {
@@ -182,7 +187,7 @@ function buildUI() {
   sliders.twist.range.closest('.slider').after($('variation').closest('label'));
   for (const k of CAM_KEYS) makeSlider($('camSliders'), k, k);
   makeSlider($('scaleSlider'), 'scale', 'scale');
-  sliders.scale.range.closest('.slider').querySelector('.name').appendChild($('scaleMode'));   // small mode switch right of «Масштаб»
+  { const sl = sliders.scale.range.closest('.slider'); sl.classList.add('withAside'); sl.appendChild($('scaleMode')); }   // small mode switch right of «Масштаб»
   makeSlider($('scaleSlider'), 'rotZ', 'rotZ');
   makeSlider($('angleSlider'), 'gradAngle', 'angle');
 
@@ -249,7 +254,7 @@ function applyLang() {
   const mod = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl';
   $('copyHint').innerHTML = `<kbd>${mod} + C</kbd> ${t('k_copyAny')}`;
   document.title = t('title');
-  $('langs').querySelectorAll('button').forEach((b) => b.classList.toggle('is-active', b.dataset.l === lang));
+  $('langs').value = lang;
   // Shortcut lists live in the "?" tooltips next to the Camera and Size & position titles.
   const mb = lang === 'en' ? { 'ЛКМ': 'LMB', 'СКМ': 'MMB', 'ПКМ': 'RMB', 'Колесо': 'Wheel' } : lang === 'kk' ? { 'ЛКМ': 'СТБ', 'СКМ': 'ОТБ', 'ПКМ': 'ОңТБ', 'Колесо': 'Дөңгелек' } : {};
   const tr = (x) => x.replace(/ЛКМ|СКМ|ПКМ|Колесо/g, (m) => mb[m] || m);
@@ -404,7 +409,11 @@ function renderThumbs() {
 
 // Format controls from state: fields (unless being typed in), slider stop, proportion icon, ratio text.
 // Filled part of a range track (custom-styled, see style.css).
-function paintRange(r) { r.style.setProperty('--p', ((r.value - r.min) / (r.max - r.min || 1)) * 100 + '%'); }
+function paintRange(r) {
+  const f = Math.min(1, Math.max(0, (r.value - r.min) / (r.max - r.min || 1)));
+  r.style.setProperty('--p', f * 100 + '%');
+  r.parentNode?.style?.setProperty('--f', f);   // scrub bar draws fill + handle from this
+}
 document.addEventListener('input', (e) => { if (e.target.type === 'range') paintRange(e.target); });
 
 function syncFormat() {
@@ -660,7 +669,7 @@ function setupWheel() {
   const panel = document.querySelector('.panel');
   // custom steppers instead of the native spin box
   const chev = (d) => `<svg viewBox="0 0 8 5"><path d="${d}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-  panel.querySelectorAll('input[type=number]:not(.alpha)').forEach((inp) => {
+  panel.querySelectorAll('input[type=number]:not(.alpha):not(.scrubNum)').forEach((inp) => {
     const w = document.createElement('span'); w.className = 'numWrap';
     inp.replaceWith(w); w.appendChild(inp);
     const sp = document.createElement('span'); sp.className = 'spin';

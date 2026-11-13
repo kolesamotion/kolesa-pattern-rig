@@ -71,11 +71,39 @@ select.kds-input { appearance: none; padding-right: 32px; cursor: pointer;
 select.kds-input option { color: #1d2129; }
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-top: var(--space-3); }
 
-/* Sliders */
-.slider { display: grid; grid-template-columns: 1fr 96px; gap: var(--space-1_5) var(--space-3); align-items: center; margin-bottom: var(--space-4); }
-.slider .name { grid-column: 1 / -1; display: flex; justify-content: space-between; }
-.slider .unit { color: var(--muted-foreground); font-size: 12px; }
-.slider .kds-input { height: var(--control-sm); padding: 0 var(--space-2); font-variant-numeric: tabular-nums; }
+/* Sliders = scrub bars (Figma Temp 36:339). Neutral fills are the foreground colour at low opacity,
+   so the same bar works on the light and the dark sidebar. --f (0…1) comes from paintRange(). */
+.slider { margin-bottom: var(--space-2); }
+.slider.withAside { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: var(--space-2); }
+.scrub { --f: .5; --thumb: 3px; --inset: 6px; position: relative; height: 36px; border-radius: var(--radius-md); overflow: hidden;
+  background: color-mix(in oklch, var(--foreground) 5%, transparent); }
+.scrubFill { position: absolute; inset: 0 auto 0 0; width: calc(var(--inset) + var(--thumb) / 2 + (100% - 2 * var(--inset) - var(--thumb)) * var(--f));
+  background: color-mix(in oklch, var(--foreground) 9%, transparent); transition: background var(--duration-fast) var(--ease-out); }
+.scrubThumb { position: absolute; top: 8px; width: var(--thumb); height: 20px; border-radius: 99px; left: calc(var(--inset) + (100% - 2 * var(--inset) - var(--thumb)) * var(--f));
+  background: var(--foreground); opacity: .85; pointer-events: none; transition: opacity var(--duration-fast) var(--ease-out); }
+.scrubTicks { position: absolute; inset: 14px 0 auto; height: 8px; opacity: 0; pointer-events: none; transition: opacity var(--duration-fast) var(--ease-out);
+  background: linear-gradient(to right, transparent calc(25% - .5px), var(--tick) 0 calc(25% + .5px), transparent 0 calc(50% - .5px), var(--tick) 0 calc(50% + .5px),
+    transparent 0 calc(75% - .5px), var(--tick) 0 calc(75% + .5px), transparent 0);
+  --tick: color-mix(in oklch, var(--foreground) 15%, transparent); }
+.scrub .name { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); max-width: calc(100% - 110px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font: 400 13px/16px var(--font-sans); color: var(--muted-foreground); pointer-events: none; transition: color var(--duration-fast) var(--ease-out); }
+.scrubVal { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); z-index: 2; display: flex; align-items: baseline;
+  font: 400 12px/16px var(--font-mono); color: var(--muted-foreground); font-variant-numeric: tabular-nums; transition: color var(--duration-fast) var(--ease-out); }
+.scrubNum { all: unset; field-sizing: content; min-width: 1ch; max-width: 9ch; text-align: right; font: inherit; color: inherit; cursor: text; border-radius: 4px; padding: 0 2px; -moz-appearance: textfield; }
+.scrubNum:hover, .scrubNum:focus { background: color-mix(in oklch, var(--foreground) 8%, transparent); }
+.scrubNum:focus { color: var(--foreground); }
+.scrubUnit { margin-left: 1px; }
+/* the real control: invisible range across the whole bar */
+.scrub input[type=range] { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; opacity: 0; cursor: ew-resize; }
+.scrub input[type=range]::-webkit-slider-runnable-track { height: 100%; background: none; }
+.scrub input[type=range]::-webkit-slider-thumb { width: calc(var(--thumb) + 2 * var(--inset)); height: 36px; margin-top: 0; }
+.scrub input[type=range]::-moz-range-thumb { width: calc(var(--thumb) + 2 * var(--inset)); height: 36px; }
+.scrub:hover .scrubFill, .scrub:active .scrubFill { background: color-mix(in oklch, var(--foreground) 13%, transparent); }
+.scrub:hover .scrubTicks, .scrub:active .scrubTicks { opacity: 1; }
+.scrub:hover .scrubThumb, .scrub:active .scrubThumb { opacity: 1; }
+.scrub:hover .name, .scrub:active .name, .scrub:hover .scrubVal, .scrub:active .scrubVal { color: var(--foreground); }
+.scrub:has(input[type=range]:focus-visible) { box-shadow: inset 0 0 0 2px color-mix(in oklch, var(--ring) 55%, transparent); }
+@media (prefers-reduced-motion: reduce) { .scrub * { transition: none !important; } }
 /* Range: flat track (no outline), filled part = --p (set from JS), plain thumb */
 input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 16px; margin: 0; background: transparent; cursor: pointer; --p: 50%; }
 input[type=range]::-webkit-slider-runnable-track { height: 4px; border: 0; border-radius: 999px;
@@ -89,17 +117,28 @@ input[type=range]:hover::-webkit-slider-thumb { box-shadow: 0 0 0 4px color-mix(
 input[type=range]:focus-visible { outline: none; }
 input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px color-mix(in oklch, var(--ring) 35%, transparent); }
 
-/* Toggle switches: label on the left, switch on the right */
-.check { display: flex; flex-direction: row-reverse; justify-content: space-between; gap: var(--space-3); align-items: center; margin: var(--space-2_5) 0; cursor: pointer; }
-.switch { appearance: none; -webkit-appearance: none; flex: none; position: relative; width: 32px; height: 18px; margin: 0; border-radius: 999px; cursor: pointer;
-  background: color-mix(in oklch, var(--input) 45%, transparent); transition: background var(--duration-fast) var(--ease-out); }
-.switch::before { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--white);
-  box-shadow: 0 1px 2px rgb(29 33 41 / 0.25); transition: transform var(--duration-fast) var(--ease-out); }
-.switch:checked { background: var(--primary); }
-#tsRatioText { color: var(--muted-foreground); font-size: 12px; font-variant-numeric: tabular-nums; }
-.switch:checked::before { transform: translateX(14px); }
-.check:hover .switch:not(:checked) { background: color-mix(in oklch, var(--input) 65%, transparent); }
-.switch:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 30%, transparent); }
+/* Toggle rows match the scrub bars: same 36px plate, 13px muted label, foreground on hover.
+   Switch is neutral (foreground tints) instead of brand blue, like the slider handle. */
+.check { position: relative; display: flex; flex-direction: row-reverse; justify-content: space-between; align-items: center; gap: var(--space-3);
+  height: 36px; margin: 0 0 var(--space-2); padding: 0 9px 0 14px; border-radius: var(--radius-md); cursor: pointer;
+  background: color-mix(in oklch, var(--foreground) 5%, transparent); color: var(--muted-foreground);
+  font: 400 13px/16px var(--font-sans); transition: background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out); }
+.check > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.check:hover { background: color-mix(in oklch, var(--foreground) 9%, transparent); color: var(--foreground); }
+.check:has(.switch:checked) { color: var(--foreground); }
+.switch { appearance: none; -webkit-appearance: none; flex: none; position: relative; width: 30px; height: 18px; margin: 0; border-radius: 999px; cursor: pointer;
+  background: color-mix(in oklch, var(--foreground) 14%, transparent); transition: background var(--duration-fast) var(--ease-out); }
+.switch::before { content: ''; position: absolute; top: 3px; left: 3px; width: 12px; height: 12px; border-radius: 50%; background: var(--foreground); opacity: .55;
+  transition: transform var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out), opacity var(--duration-fast) var(--ease-out); }
+.switch:checked { background: color-mix(in oklch, var(--foreground) 42%, transparent); }
+.check:hover .switch:checked { background: color-mix(in oklch, var(--foreground) 52%, transparent); }
+.switch:checked::before { transform: translateX(12px); background: var(--sidebar); opacity: 1; }
+.check:hover .switch:not(:checked) { background: color-mix(in oklch, var(--foreground) 20%, transparent); }
+.check:hover .switch:not(:checked)::before { opacity: .8; }
+#tsRatioText { color: var(--muted-foreground); font: 400 12px/16px var(--font-mono); font-variant-numeric: tabular-nums; margin-left: 4px; }
+.switch:focus-visible { outline: none; }
+.check:has(.switch:focus-visible) { box-shadow: inset 0 0 0 2px color-mix(in oklch, var(--ring) 55%, transparent); }
+@media (prefers-reduced-motion: reduce) { .check, .switch, .switch::before { transition: none; } }
 details { margin-top: var(--space-3); }
 summary { cursor: pointer; color: var(--muted-foreground); font-weight: 500; margin-bottom: var(--space-3); }
 summary:hover { color: var(--foreground); }
@@ -180,7 +219,6 @@ body.resizing .ghost { visibility: hidden; }   /* frame is only CSS-scaled while
   .exportSec { bottom: 0; margin: var(--space-6) calc(-1 * var(--space-4)) calc(-1 * var(--space-4)); padding: var(--space-4); }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
-#advSliders .check { margin: calc(-1 * var(--space-1_5)) 0 var(--space-4); }
 
 /* Panel controls without outlines: soft filled fields instead of borders (focus ring stays) */
 .panel .kds-input, .panel .kds-btn--outline, .panel input[type=color] { border-color: transparent; background-color: var(--fill); }
@@ -239,7 +277,25 @@ body.resizing .ghost { visibility: hidden; }   /* frame is only CSS-scaled while
 .helpTip .tip .keys li.note { display: block; margin-top: 4px; padding-top: 6px; border-top: 1px solid rgb(255 255 255 / 0.12); opacity: .75; }
 :is([data-theme="dark"], .dark) .helpTip .tip .keys li.note { border-top-color: rgb(29 33 41 / 0.12); }
 
-/* Small segmented switch inside a slider's title row (Scale: format-relative / px). */
-.slider .name { align-items: center; }
+/* Small segmented switch right of the Scale bar (format-relative / px). */
 .miniSeg { display: inline-flex; height: 24px; padding: 2px; gap: 0; width: auto; margin: 0; border-radius: var(--radius-md); }
 .miniSeg .kds-tabs__trigger { height: 20px; min-width: 32px; padding: 0 8px; font-size: 12px; line-height: 16px; border-radius: calc(var(--radius-md) - 2px); }
+
+/* Preset names are not shown under the cards: the name appears over the thumbnail on hover / keyboard focus
+   (and stays while a user preset is being renamed). */
+.presetCard .name, .presetCard .nameEdit { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1; margin: 0; }
+.presetCard .name { padding: 14px 8px 6px; border-radius: 0 0 var(--radius-md) var(--radius-md); color: #fff;
+  background: linear-gradient(to top, rgb(16 19 26 / 0.72), rgb(16 19 26 / 0)); opacity: 0; transform: translateY(2px);
+  transition: opacity var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out); }
+.presetCard:hover .name, .presetCard:focus-visible .name, .presetCard:focus-within .name { opacity: 1; transform: none; }
+.presetCard:hover .name, .presetCard.is-active .name { color: #fff; }
+.presetCard .nameEdit { left: 4px; right: 4px; bottom: 4px; height: 22px; margin: 0; background: var(--sidebar); }
+
+/* % / px switch next to the Scale bar: same 36px height, plate and radius as the scrub bar. */
+.slider.withAside .miniSeg { height: 36px; padding: 3px; border-radius: var(--radius-md); background: color-mix(in oklch, var(--foreground) 5%, transparent); }
+.slider.withAside .miniSeg .kds-tabs__trigger { height: 30px; min-width: 36px; font-size: 13px; border-radius: calc(var(--radius-md) - 3px); }
+
+/* Language dropdown in the header: same soft plate as the panel controls, compact. */
+.panel select.langSel { width: auto; height: 32px; padding: 0 28px 0 10px; border-radius: var(--radius-md); font: 500 12px/16px var(--font-sans);
+  background-position: right 8px center; background-color: color-mix(in oklch, var(--foreground) 5%, transparent); border-color: transparent; }
+.panel select.langSel:hover { background-color: color-mix(in oklch, var(--foreground) 9%, transparent); }
