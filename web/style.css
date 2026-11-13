@@ -337,3 +337,8 @@ body.resizing .ghost { visibility: hidden; }   /* frame is only CSS-scaled while
 /* Secondary labels read at the same level as slider names: 13px regular, muted; foreground on hover. */
 .panel .kds-label, .panel summary, .panel .btnRow .kds-btn { font: 400 13px/16px var(--font-sans); color: var(--muted-foreground); }
 .panel summary:hover, .panel .btnRow .kds-btn:hover { color: var(--foreground); }
+
+/* No text selection inside sliders / toggle rows / segmented controls: a drag must only change the value.
+   The inline number field stays selectable for typing. */
+.scrub, .check, .segAnim { -webkit-user-select: none; user-select: none; }
+.scrub .scrubNum { -webkit-user-select: text; user-select: text; }
