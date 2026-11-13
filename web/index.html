@@ -56,20 +56,19 @@
       </details>
     </section>
 
-    <section id="cameraSec" class="cameraSec">
-      <div class="titleTip"><h2 data-t="camera"></h2><span class="helpTip helpTip--wide" tabindex="0"><i data-icon="question-round"></i><span class="tip" role="tooltip"><ul class="keys" id="camKeys"></ul></span></span></div>
-      <div id="camSliders"></div>
-      <button class="kds-btn kds-btn--outline kds-btn--size-sm" id="resetCam"><i data-icon="rotate"></i><span data-t="resetCam"></span></button>
-    </section>
-
-    <section>
-      <div class="titleTip"><h2 data-t="position"></h2><span class="helpTip helpTip--wide" tabindex="0"><i data-icon="question-round"></i><span class="tip" role="tooltip"><ul class="keys" id="posKeys"></ul></span></span></div>
+    <!-- Camera: size & position in both modes; 3D adds orbit / distance sliders and the camera reset (.cam3d). -->
+    <section id="camSec">
+      <div class="titleTip"><h2 data-t="camera"></h2><span class="helpTip helpTip--wide" tabindex="0"><i data-icon="question-round"></i><span class="tip" role="tooltip"><ul class="keys" id="posKeys"></ul></span></span></div>
       <div class="kds-tabs__list miniSeg segAnim" id="scaleMode">
         <button class="kds-tabs__trigger" data-v="rel" data-t="scaleRelS" data-t-aria="scaleRel"></button>
         <button class="kds-tabs__trigger" data-v="abs" data-t="scaleAbsS" data-t-aria="scaleAbs"></button>
       </div>
       <div id="scaleSlider"></div>
-      <button class="kds-btn kds-btn--outline kds-btn--size-sm" id="centerBtn"><i data-icon="fullscreen-exit"></i><span data-t="center"></span></button>
+      <div id="camSliders" class="cam3d"></div>
+      <div class="btnRow">
+        <button class="kds-btn kds-btn--outline kds-btn--size-sm" id="centerBtn"><i data-icon="fullscreen-exit"></i><span data-t="center"></span></button>
+        <button class="kds-btn kds-btn--outline kds-btn--size-sm cam3d" id="resetCam"><i data-icon="rotate"></i><span data-t="resetCam"></span></button>
+      </div>
     </section>
 
     <section>

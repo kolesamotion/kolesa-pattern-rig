@@ -265,8 +265,7 @@ function applyLang() {
   $('posKeys').innerHTML = keyList([
     ['k_move', 'СКМ'], ['k_move2d', 'ЛКМ'], ['k_zoom', 'Колесо', 'ПКМ'],
     ['k_roll', `${mod} + ЛКМ ↔`, `${mod} + Колесо`], ['k_rings', `${mod} + ЛКМ ↕`], ['k_frame', 'H'],
-  ]);
-  $('camKeys').innerHTML = keyList([['k_orbit', 'ЛКМ']]) + `<li class="note">${t('k_same')}</li>`;
+  ]) + keyList([['k_orbit', 'ЛКМ']]).replace('<li>', '<li class="cam3d">');   // orbit row only in 3D
   renderUserPresets();
 }
 
@@ -337,7 +336,7 @@ function render() {
   ['g0', 'g1', 'g2'].forEach((id, i) => { $(id).value = s.grad[i]; });
   syncHex();
   $('gradBox').classList.toggle('show', s.gradient);
-  $('cameraSec').classList.toggle('show', s.threeD);
+  $('camSec').classList.toggle('is3d', !!s.threeD);
   $('sizeLabel').textContent = `${s.width} × ${s.height}`;
   if (fitKey !== s.width + 'x' + s.height) fitFrame();   // stage resizes are handled by the ResizeObserver
   else renderGhost();

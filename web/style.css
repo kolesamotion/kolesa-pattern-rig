@@ -153,14 +153,13 @@ details { margin-top: var(--space-3); }
 summary { cursor: pointer; color: var(--muted-foreground); font-weight: 500; margin-bottom: var(--space-3); }
 summary:hover { color: var(--foreground); }
 .kds-hint { margin: var(--space-2) 0 0; }
-#centerBtn, #resetCam { margin-top: var(--space-1); }
 
 .keys { list-style: none; margin: var(--space-3) 0 0; padding: 0; font-size: 12px; line-height: 16px; color: var(--muted-foreground); }
 .keys li { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); padding: 3px 0; }
 .keys li > span:last-child { text-align: right; }
 .keys kbd { font: 400 12px/16px var(--font-mono); color: var(--foreground); background: var(--muted); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0 5px; white-space: nowrap; }
-.cameraSec { display: none; }
-.cameraSec.show { display: block; }
+#camSec:not(.is3d) .cam3d { display: none; }
+.btnRow { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-1); }
 
 /* Colours */
 .colorRow { display: grid; grid-template-columns: 1fr 172px; align-items: center; gap: var(--space-2) var(--space-3); margin-bottom: var(--space-4); }
