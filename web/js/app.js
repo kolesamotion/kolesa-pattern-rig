@@ -357,6 +357,9 @@ function render() {
   $('gradBox').classList.toggle('show', s.gradient);
   $('camSec').classList.toggle('is3d', !!s.threeD);
   $('sizeLabel').textContent = `${s.width} × ${s.height}`;
+  // Opaque background: paint the frame itself in that colour instead of the checkerboard, so an anti-aliased
+  // edge of the SVG can never show a light hairline.
+  $('frame').style.background = s.bgOn && (s.bgOpacity ?? 100) >= 100 ? s.bgColor : '';
   if (fitKey !== s.width + 'x' + s.height) fitFrame();   // stage resizes are handled by the ResizeObserver
   else renderGhost();
   clearTimeout(hashTimer);
@@ -470,8 +473,10 @@ function fitFrame() {
   const fr = $('frame');
   fitKey = state.width + 'x' + state.height;
   const k = fitScale();
-  fr.style.width = Math.max(1, state.width * k) + 'px';
-  fr.style.height = Math.max(1, state.height * k) + 'px';
+  // Snap to whole device pixels: a fractional edge let the white checkerboard bleed through as a hairline.
+  const dpr = devicePixelRatio || 1, snap = (v) => Math.max(1, Math.round(v * dpr)) / dpr;
+  fr.style.width = snap(state.width * k) + 'px';
+  fr.style.height = snap(state.height * k) + 'px';
   const st = $('stage');
   ghostGeo = { k, sw: st.clientWidth, sh: st.clientHeight };
   renderGhost();
