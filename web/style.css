@@ -317,3 +317,8 @@ body.resizing .ghost { visibility: hidden; }   /* frame is only CSS-scaled while
   --scrim: color-mix(in oklch, var(--brand-neutral) 72%, transparent); }
 :is([data-theme="dark"], .dark) .panel { --fill: var(--neutral-900); --fill-2: var(--neutral-800); --fill-3: var(--neutral-700); --fill-4: var(--neutral-600);
   --on: var(--input); --on-hover: var(--neutral-200); }
+
+/* Floating 2D / 3D switch over the canvas (replaces the 3D toggle in the panel). */
+.viewSeg { position: absolute; top: var(--space-4); left: 50%; transform: translateX(-50%); z-index: 3;
+  background: var(--sidebar); border: 1px solid var(--sidebar-border); box-shadow: 0 4px 12px color-mix(in oklch, var(--brand-neutral) 10%, transparent); }
+.viewSeg .kds-tabs__trigger { min-width: 48px; }

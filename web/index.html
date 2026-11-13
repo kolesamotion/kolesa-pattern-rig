@@ -50,7 +50,6 @@
       <label class="check"><input type="checkbox" role="switch" class="switch" id="shiftOn"><span data-t="shift"></span></label>
       <label class="check"><input type="checkbox" role="switch" class="switch" id="core"><span data-t="core"></span></label>
       <label class="check"><input type="checkbox" role="switch" class="switch" id="variation"><span data-t="variation"></span></label>
-      <label class="check"><input type="checkbox" role="switch" class="switch" id="threeD"><span data-t="threeD"></span></label>
       <details>
         <summary data-t="advanced"></summary>
         <div id="advSliders"></div>
@@ -101,6 +100,10 @@
   <main class="stage" id="stage">
     <div class="ghost" id="ghost" aria-hidden="true"></div>
     <div class="frame" id="frame"></div>
+    <div class="kds-tabs__list viewSeg" id="viewMode" role="group" data-t-aria="viewMode">
+      <button class="kds-tabs__trigger" data-v="0">2D</button>
+      <button class="kds-tabs__trigger" data-v="1">3D</button>
+    </div>
     <div class="size" id="sizeLabel"></div>
     <div class="resizer" id="resizer" role="separator" aria-orientation="vertical" data-t-aria="panelWidth" tabindex="0"></div>
   </main>

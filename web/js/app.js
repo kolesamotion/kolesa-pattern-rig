@@ -191,7 +191,8 @@ function buildUI() {
   makeSlider($('scaleSlider'), 'rotZ', 'rotZ');
   makeSlider($('angleSlider'), 'gradAngle', 'angle');
 
-  for (const k of BOOL_KEYS) $(k).addEventListener('change', (e) => { state[k] = e.target.checked; update(); });
+  for (const k of BOOL_KEYS) $(k)?.addEventListener('change', (e) => { state[k] = e.target.checked; update(); });   // threeD has no checkbox: floating 2D/3D switch over the canvas
+  $('viewMode').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { state.threeD = b.dataset.v === '1'; update(); }));
   $('linkTS').addEventListener('change', (e) => { if (e.target.checked) state.tsRatio = state.thickness / state.step; update(); });
   $('scaleMode').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => switchScaleMode(b.dataset.v)));
   $('addPreset').addEventListener('click', addUserPreset);
@@ -320,7 +321,8 @@ function render() {
     if (document.activeElement !== num) { num.value = v; placeUnit(num); }
     range.value = v; paintRange(range);
   }
-  for (const k of BOOL_KEYS) $(k).checked = !!s[k];
+  for (const k of BOOL_KEYS) if ($(k)) $(k).checked = !!s[k];
+  $('viewMode').querySelectorAll('button').forEach((b) => b.classList.toggle('is-active', (b.dataset.v === '1') === !!s.threeD));
   $('tsRatioText').textContent = s.linkTS ? `${Math.round(s.tsRatio * 100)} %` : '';
   $('shiftOn').checked = shiftTarget != null ? shiftTarget === 1 : s.shift > 0;
   syncFormat();
