@@ -54,8 +54,10 @@ function fromQuery(q) {
   if (p.has('gradA')) { const g = p.get('gradA').split(',').map(Number); if (g.length === 3 && g.every((v) => v >= 0 && v <= 100)) s.gradOpacity = g; }
   return clampAll(s);
 }
+const ANGLE_KEYS = ['rotZ', 'gap', 'twist', 'gradAngle'];   // whole degrees; rotX / rotY stay fractional for a smooth orbit
 function clampAll(s) {
   for (const [k, [lo, hi]] of Object.entries(LIMITS)) if (k in s) s[k] = Math.min(hi, Math.max(lo, s[k]));
+  for (const k of ANGLE_KEYS) if (k in s) s[k] = Math.round(s[k]) || 0;   // angles always whole degrees (no -0)
   s.width = Math.min(20000, Math.max(16, Math.round(s.width)));
   s.height = Math.min(20000, Math.max(16, Math.round(s.height)));
   s.cx = Math.min(2, Math.max(-1, s.cx)); s.cy = Math.min(2, Math.max(-1, s.cy));
@@ -86,7 +88,11 @@ function makeSlider(parent, key, labelKey) {
     `<span class="scrubVal"><input class="scrubNum" type="number" min="${min}" max="${max}" step="${step}">${u}</span></div>`;
   parent.appendChild(el);
   const [range, num] = el.querySelectorAll('input');
-  const onInput = (v) => { state[key] = Math.min(max, Math.max(min, +v)); linkThickness(key); update(); };
+  const onInput = (v) => {
+    const x = Math.min(max, Math.max(min, +v));
+    state[key] = ANGLE_KEYS.includes(key) ? Math.round(x) || 0 : x;   // angles: whole degrees
+    linkThickness(key); update();
+  };
   range.addEventListener('input', () => onInput(range.value));
   num.addEventListener('change', () => { onInput(num.value); num.value = +(+state[key]).toFixed(2); placeUnit(num); });   // show the clamped value
   // The value field must not start a text selection when a drag begins on it: block the native press while it is
@@ -464,7 +470,9 @@ function gcd(a, b) { while (b) [a, b] = [b, a % b]; return a; }
 function fitScale() {
   const st = $('stage');
   const pad = window.innerWidth <= 760 ? 32 : 80;
-  const aw = st.clientWidth - pad, ah = st.clientHeight - pad - 20;
+  // Vertically the frame stays centred but clears the floating 2D/3D control (and, symmetrically, the size label) by 12 px.
+  const seg = $('viewMode'), segB = seg.offsetTop + seg.offsetHeight + 12;
+  const aw = st.clientWidth - pad, ah = Math.min(st.clientHeight - pad - 20, st.clientHeight - 2 * segB);
   return Math.min(aw / state.width, ah / state.height);
 }
 
@@ -556,7 +564,10 @@ function setupDrag() {
   fr.addEventListener('pointerup', end); fr.addEventListener('pointercancel', end);
   fr.addEventListener('wheel', (e) => {
     e.preventDefault();
-    if (e.ctrlKey || e.metaKey) state.rotZ = ((state.rotZ - e.deltaY * 0.1 + 540) % 360) - 180;   // 3D + Ctrl/Cmd: roll
+    if (e.ctrlKey || e.metaKey) {                                // Ctrl/Cmd: roll in whole degrees, at least 1° per tick
+      const d = -e.deltaY * 0.1, step = Math.sign(d) * Math.max(1, Math.round(Math.abs(d)));
+      state.rotZ = ((state.rotZ + step + 540) % 360) - 180;
+    }
     else state.scale = state.scale * Math.exp(-e.deltaY * 0.0015);                   // both modes: scale
     clampAll(state); update();
   }, { passive: false });
