@@ -320,14 +320,17 @@ body.resizing .ghost { visibility: hidden; }   /* frame is only CSS-scaled while
 
 /* Floating 2D / 3D switch over the canvas (replaces the 3D toggle in the panel). */
 .viewSeg { position: absolute; top: var(--space-4); left: 50%; transform: translateX(-50%); z-index: 3;
-  display: grid; grid-template-columns: 1fr 1fr; border: 0; background: var(--sidebar);
+  background: var(--sidebar);
   box-shadow: 0 4px 12px color-mix(in oklch, var(--brand-neutral) 10%, transparent); }
-/* sliding thumb under the active mode; buttons themselves are flat */
-.viewSeg::before { content: ''; position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc(50% - 3px);
-  border-radius: calc(var(--radius-lg) - 3px); background: var(--fill-2);
-  transition: transform var(--duration-base) var(--ease-out); }
-.viewSeg.is-3d::before { transform: translateX(100%); }
-.viewSeg .kds-tabs__trigger, .viewSeg .kds-tabs__trigger.is-active { position: relative; z-index: 1; min-width: 48px;
+.viewSeg .kds-tabs__trigger { min-width: 48px; }
+/* Animated two-option segmented control (2D/3D, % / px): a thumb slides under the active option,
+   options are flat (no borders). .is-second on the list moves the thumb. --seg-thumb sets its colour. */
+.segAnim { display: grid; grid-template-columns: 1fr 1fr; border: 0; --seg-thumb: var(--fill-2); --seg-r: var(--radius-lg); }
+.segAnim::before { content: ''; position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc(50% - 3px);
+  border-radius: calc(var(--seg-r) - 3px); background: var(--seg-thumb); transition: transform var(--duration-base) var(--ease-out); }
+.segAnim.is-second::before { transform: translateX(100%); }
+.segAnim .kds-tabs__trigger, .segAnim .kds-tabs__trigger.is-active { position: relative; z-index: 1;
   border-color: transparent; background: transparent; box-shadow: none; transition: color var(--duration-base) var(--ease-out); }
-.viewSeg .kds-tabs__trigger:focus-visible { border-color: transparent; box-shadow: var(--focus); }
-@media (prefers-reduced-motion: reduce) { .viewSeg::before { transition: none; } }
+.segAnim .kds-tabs__trigger:focus-visible { border-color: transparent; box-shadow: var(--focus); }
+.slider.withAside .miniSeg.segAnim { position: relative; --seg-thumb: var(--fill-3); --seg-r: var(--radius-md); }
+@media (prefers-reduced-motion: reduce) { .segAnim::before { transition: none; } }
