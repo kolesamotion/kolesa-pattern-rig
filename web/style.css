@@ -135,7 +135,6 @@ input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: var(--focus)
   font: 400 13px/16px var(--font-sans); transition: background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out); }
 .check > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .check:hover { background: var(--fill-2); color: var(--foreground); }
-.check:has(.switch:checked) { color: var(--foreground); }
 .switch { appearance: none; -webkit-appearance: none; flex: none; position: relative; width: 30px; height: 18px; margin: 0; border-radius: 999px; cursor: pointer;
   background: var(--fill-3); transition: background var(--duration-fast) var(--ease-out); }
 .switch::before { content: ''; position: absolute; top: 3px; left: 3px; width: 12px; height: 12px; border-radius: 50%; background: var(--foreground); opacity: .55;
