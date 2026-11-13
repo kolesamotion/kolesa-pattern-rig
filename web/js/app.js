@@ -190,7 +190,7 @@ function buildUI() {
   for (const k of ['rotX', 'rotY']) makeSlider($('camSliders'), k, k);
   makeSlider($('scaleSlider'), 'scale', 'scale');
   { const sl = sliders.scale.range.closest('.slider'); sl.classList.add('withAside'); sl.appendChild($('scaleMode')); }   // small mode switch right of «Масштаб»
-  makeSlider($('scaleSlider'), 'rotZ', 'rotZ');
+  makeSlider($('rotZSlider'), 'rotZ', 'rotZ');   // below rotation X / Y
   makeSlider($('angleSlider'), 'gradAngle', 'angle');
 
   for (const k of BOOL_KEYS) $(k)?.addEventListener('change', (e) => { state[k] = e.target.checked; update(); });   // threeD has no checkbox: floating 2D/3D switch over the canvas
@@ -202,7 +202,9 @@ function buildUI() {
     for (const k of GEOM_KEYS) state[k] = DEFAULTS[k];
     update(); toast(t('resetGeomDone'));
   });
-  $('resetCam').addEventListener('click', () => { for (const k of [...CAM_KEYS, 'rotZ', 'panX', 'panY']) state[k] = DEFAULTS[k]; update(); });
+  // 3D replacement for «В центр»: camera back to the centre at a fixed view (Z 0, X -30, Y 30).
+  const CAM_HOME = { rotX: -30, rotY: 30, rotZ: 0, panX: 0, panY: 0, cx: 0.5, cy: 0.5, camDist: DEFAULTS.camDist };
+  $('resetCam').addEventListener('click', () => { Object.assign(state, CAM_HOME); update(); });
   $('centerBtn').addEventListener('click', () => { state.cx = 0.5; state.cy = 0.5; update(); });
 
   swatches($('ringSw'), RING_COLORS, 'ringColor');
