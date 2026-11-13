@@ -509,8 +509,8 @@ function setupDrag() {
     } else if (start.mode === 'roll') {
       state.rotZ = wrap(s0.rotZ + dx * 0.4);
     } else if (start.mode === 'orbit') {
-      state.rotY = wrap(s0.rotY + dx * 0.4);
-      state.rotX = wrap(s0.rotX - dy * 0.4);
+      state.rotY = wrap(s0.rotY - dx * 0.4);                    // inverted orbit (user preference)
+      state.rotX = wrap(s0.rotX + dy * 0.4);
     } else if (start.mode === 'pan') {
       state.panX = s0.panX + dx * toLocal;
       state.panY = s0.panY + dy * toLocal;
