@@ -66,7 +66,7 @@ section::before { content: ''; position: absolute; top: 0; left: calc(-1 * var(-
 .presetCard:focus-visible .thumb { box-shadow: 0 0 0 2px var(--sidebar), 0 0 0 4px var(--ring); }
 
 /* Aspect-ratio slider: same scrub bar as the others; value = proportion icon + ratio, ticks at the 7 stops. */
-.ratioSlider .scrubVal { align-items: center; gap: var(--space-1_5); }
+.ratioSlider .scrubVal { align-items: center; gap: var(--space-1_5); pointer-events: none; }   /* read-only value: let drags reach the slider */
 .ratioSlider .scrubTicks { left: calc(var(--inset) + var(--thumb) / 2); right: calc(var(--inset) + var(--thumb) / 2);
   background: linear-gradient(to right, var(--tick) 0 1px, transparent 0) 0 0 / calc((100% - 1px) / 6) 100% repeat-x; }
 .ratioIcon { flex: none; display: flex; align-items: center; justify-content: center; width: 16px; height: 16px; }
