@@ -89,6 +89,15 @@ function makeSlider(parent, key, labelKey) {
   const onInput = (v) => { state[key] = Math.min(max, Math.max(min, +v)); linkThickness(key); update(); };
   range.addEventListener('input', () => onInput(range.value));
   num.addEventListener('change', () => { onInput(num.value); num.value = +(+state[key]).toFixed(2); placeUnit(num); });   // show the clamped value
+  // The value field must not start a text selection when a drag begins on it: block the native press while it is
+  // not being edited; a plain click (no movement) opens it for typing with the whole value selected.
+  num.addEventListener('pointerdown', (e) => {
+    if (document.activeElement === num) return;
+    e.preventDefault();
+    const x0 = e.clientX, y0 = e.clientY;
+    const up = (u) => { if (Math.hypot(u.clientX - x0, u.clientY - y0) < 4) { num.focus(); num.select(); } };
+    addEventListener('pointerup', up, { once: true });
+  });
   sliders[key] = { range, num };
 }
 
