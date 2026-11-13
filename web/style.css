@@ -333,3 +333,7 @@ body.resizing .ghost { visibility: hidden; }   /* frame is only CSS-scaled while
 .segAnim .kds-tabs__trigger:focus-visible { border-color: transparent; box-shadow: var(--focus); }
 .slider.withAside .miniSeg.segAnim { position: relative; --seg-thumb: var(--fill-3); --seg-r: var(--radius-md); }
 @media (prefers-reduced-motion: reduce) { .segAnim::before { transition: none; } }
+
+/* Secondary labels read at the same level as slider names: 13px regular, muted; foreground on hover. */
+.panel .kds-label, .panel summary, .panel .btnRow .kds-btn { font: 400 13px/16px var(--font-sans); color: var(--muted-foreground); }
+.panel summary:hover, .panel .btnRow .kds-btn:hover { color: var(--foreground); }
