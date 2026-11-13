@@ -278,6 +278,7 @@ function applyLang() {
   document.querySelectorAll('[data-t]').forEach((el) => { el.textContent = t(el.dataset.t); });
   document.querySelectorAll('[data-t-aria]').forEach((el) => { el.setAttribute('aria-label', t(el.dataset.tAria)); el.title = t(el.dataset.tAria); });
   const mod = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl';
+  const alt = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌥' : 'Alt';
   $('copyHint').innerHTML = `<kbd>${mod} + C</kbd> ${t('k_copyAny')}`;
   document.title = t('title');
   $('langs').value = lang;
@@ -288,7 +289,7 @@ function applyLang() {
     `<li><span>${t(k)}</span><span>${alts.map((a) => `<kbd>${tr(a)}</kbd>`).join(` ${t('k_or')} `)}</span></li>`).join('');
   // Common controls (both modes) in "Size & position"; Camera lists only what is 3D-specific.
   $('posKeys').innerHTML = keyList([
-    ['k_move', 'СКМ'], ['k_move2d', 'ЛКМ'], ['k_zoom', 'Колесо', 'ПКМ'],
+    ['k_move', 'СКМ', `${alt} + ЛКМ`], ['k_move2d', 'ЛКМ'], ['k_zoom', 'Колесо', 'ПКМ'],
     ['k_roll', `${mod} + ЛКМ ↔`, `${mod} + Колесо`], ['k_rings', `${mod} + ЛКМ ↕`], ['k_frame', 'H'],
   ]) + keyList([['k_orbit', 'ЛКМ']]).replace('<li>', '<li class="cam3d">');   // orbit row only in 3D
   renderUserPresets();
@@ -518,7 +519,7 @@ function setupDrag() {
     // Mode-specific: LMB = orbit in 3D, move in 2D.
     let mode;
     if (e.button === 0 && (e.ctrlKey || e.metaKey)) mode = 'ctrl';   // both modes: axis decided on first move
-    else if (state.threeD) mode = ['orbit', 'pan', 'zoom'][e.button];
+    else if (state.threeD) mode = e.button === 0 && e.altKey ? 'pan' : ['orbit', 'pan', 'zoom'][e.button];   // Alt + drag = middle button
     else mode = ['move', 'move', 'zoom'][e.button];
     if (!mode) return;
     e.preventDefault();
