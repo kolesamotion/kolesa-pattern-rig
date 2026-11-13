@@ -322,6 +322,7 @@ function render() {
     range.value = v; paintRange(range);
   }
   for (const k of BOOL_KEYS) if ($(k)) $(k).checked = !!s[k];
+  $('viewMode').classList.toggle('is-3d', !!s.threeD);
   $('viewMode').querySelectorAll('button').forEach((b) => b.classList.toggle('is-active', (b.dataset.v === '1') === !!s.threeD));
   $('tsRatioText').textContent = s.linkTS ? `${Math.round(s.tsRatio * 100)} %` : '';
   $('shiftOn').checked = shiftTarget != null ? shiftTarget === 1 : s.shift > 0;

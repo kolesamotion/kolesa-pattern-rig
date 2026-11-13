@@ -311,14 +311,23 @@ body.resizing .ghost { visibility: hidden; }   /* frame is only CSS-scaled while
    --ring, --primary, --destructive. No ad-hoc opacities.
    fill   = control plate        fill-2 = plate hover / scrub fill
    fill-3 = scrub fill hover, switch track, dividers, slider track      fill-4 = ticks, switch track hover */
-.panel { --fill: var(--neutral-15); --fill-2: var(--neutral-25); --fill-3: var(--neutral-30); --fill-4: var(--neutral-40);
+:root { --fill: var(--neutral-15); --fill-2: var(--neutral-25); --fill-3: var(--neutral-30); --fill-4: var(--neutral-40);
   --on: var(--input); --on-hover: var(--neutral-300);
   --focus: 0 0 0 3px color-mix(in oklch, var(--ring) 30%, transparent); --focus-inset: inset 0 0 0 2px var(--ring);
   --scrim: color-mix(in oklch, var(--brand-neutral) 72%, transparent); }
-:is([data-theme="dark"], .dark) .panel { --fill: var(--neutral-900); --fill-2: var(--neutral-800); --fill-3: var(--neutral-700); --fill-4: var(--neutral-600);
+:is([data-theme="dark"], .dark) { --fill: var(--neutral-900); --fill-2: var(--neutral-800); --fill-3: var(--neutral-700); --fill-4: var(--neutral-600);
   --on: var(--input); --on-hover: var(--neutral-200); }
 
 /* Floating 2D / 3D switch over the canvas (replaces the 3D toggle in the panel). */
 .viewSeg { position: absolute; top: var(--space-4); left: 50%; transform: translateX(-50%); z-index: 3;
-  background: var(--sidebar); border: 1px solid var(--sidebar-border); box-shadow: 0 4px 12px color-mix(in oklch, var(--brand-neutral) 10%, transparent); }
-.viewSeg .kds-tabs__trigger { min-width: 48px; }
+  display: grid; grid-template-columns: 1fr 1fr; border: 0; background: var(--sidebar);
+  box-shadow: 0 4px 12px color-mix(in oklch, var(--brand-neutral) 10%, transparent); }
+/* sliding thumb under the active mode; buttons themselves are flat */
+.viewSeg::before { content: ''; position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc(50% - 3px);
+  border-radius: calc(var(--radius-lg) - 3px); background: var(--fill-2);
+  transition: transform var(--duration-base) var(--ease-out); }
+.viewSeg.is-3d::before { transform: translateX(100%); }
+.viewSeg .kds-tabs__trigger, .viewSeg .kds-tabs__trigger.is-active { position: relative; z-index: 1; min-width: 48px;
+  border-color: transparent; background: transparent; box-shadow: none; transition: color var(--duration-base) var(--ease-out); }
+.viewSeg .kds-tabs__trigger:focus-visible { border-color: transparent; box-shadow: var(--focus); }
+@media (prefers-reduced-motion: reduce) { .viewSeg::before { transition: none; } }
