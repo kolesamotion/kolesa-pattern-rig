@@ -68,6 +68,10 @@ section { padding: var(--space-6) 0 0; margin-top: var(--space-6); border-top: 1
 .ratioText { font: 400 12px/16px var(--font-mono); color: var(--muted-foreground); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 select.kds-input { appearance: none; padding-right: 32px; cursor: pointer;
   background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' fill='none' stroke='%23808a9c' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 10px center; }
+/* The DS dark theme resets .kds-input with the `background` shorthand, which wiped the arrow — restore it. */
+:is([data-theme="dark"], .dark) select.kds-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' fill='none' stroke='%23a3abb8' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center; }
 select.kds-input option { color: #1d2129; }
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-top: var(--space-3); }
 
