@@ -444,8 +444,8 @@ function syncFormat() {
   // While the ratio slider is dragged the label keeps the last snapped ratio; it updates once the thumb snaps.
   if (!$('ratio').dataset.dragging) $('ratioText').textContent = a <= 20 && b <= 20 ? `${a}:${b}` : r >= 1 ? `${+r.toFixed(2)}:1` : `1:${+(1 / r).toFixed(2)}`;
   const i = $('ratioIcon').firstElementChild, ri = s.width / s.height;   // icon follows the live size
-  i.style.width = (ri >= 1 ? 22 : Math.max(5, 22 * ri)) + 'px';
-  i.style.height = (ri >= 1 ? Math.max(5, 22 / ri) : 22) + 'px';
+  i.style.width = (ri >= 1 ? 16 : Math.max(4, 16 * ri)) + 'px';
+  i.style.height = (ri >= 1 ? Math.max(4, 16 / ri) : 16) + 'px';
 }
 function gcd(a, b) { while (b) [a, b] = [b, a % b]; return a; }
 
