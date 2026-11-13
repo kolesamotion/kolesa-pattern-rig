@@ -155,12 +155,12 @@ function buildUI() {
   const snapRatio = () => {
     const from = +rr.value, to = Math.round(from);
     const [a, b] = RATIOS[to], L = ratioDrag ? ratioDrag.L : longSide();
-    ratioDrag = null;
+    ratioDrag = null; delete rr.dataset.dragging;
     const target = a >= b ? [L, Math.round(L * b / a)] : [Math.round(L * a / b), L];
     if (from === to && target[0] === state.width && target[1] === state.height) { sizeTarget = null; update(); return; }
     animateSize(target, [from, to]);
   };
-  rr.addEventListener('pointerdown', () => { const L = longSide(); cancelAnimationFrame(sizeRaf); sizeRaf = 0; sizeTarget = null; ratioDrag = { L }; });
+  rr.addEventListener('pointerdown', () => { const L = longSide(); cancelAnimationFrame(sizeRaf); sizeRaf = 0; sizeTarget = null; ratioDrag = { L }; rr.dataset.dragging = '1'; });
   rr.addEventListener('input', () => {
     if (ratioDrag) { [state.width, state.height] = sizeAt(+rr.value, ratioDrag.L); sizeTarget = [state.width, state.height]; paintRange(rr); update(); }   // sizeTarget set = thumbnails wait until release
     else snapRatio();   // wheel / programmatic
@@ -441,7 +441,8 @@ function syncFormat() {
   if (ae !== $('ratio') && !sizeRaf) $('ratio').value = best;
   paintRange($('ratio'));
   const g = gcd(fw, fh), a = fw / g, b = fh / g;
-  $('ratioText').textContent = a <= 20 && b <= 20 ? `${a}:${b}` : r >= 1 ? `${+r.toFixed(2)}:1` : `1:${+(1 / r).toFixed(2)}`;
+  // While the ratio slider is dragged the label keeps the last snapped ratio; it updates once the thumb snaps.
+  if (!$('ratio').dataset.dragging) $('ratioText').textContent = a <= 20 && b <= 20 ? `${a}:${b}` : r >= 1 ? `${+r.toFixed(2)}:1` : `1:${+(1 / r).toFixed(2)}`;
   const i = $('ratioIcon').firstElementChild, ri = s.width / s.height;   // icon follows the live size
   i.style.width = (ri >= 1 ? 22 : Math.max(5, 22 * ri)) + 'px';
   i.style.height = (ri >= 1 ? Math.max(5, 22 / ri) : 22) + 'px';
