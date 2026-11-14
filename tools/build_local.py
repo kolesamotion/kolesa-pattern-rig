@@ -9,7 +9,7 @@ def js(name):
 html = (root / 'index.html').read_text(encoding='utf-8')
 css = (root / 'style.css').read_text(encoding='utf-8')
 ds = (root / 'ds' / 'kds.css').read_text(encoding='utf-8')
-bundle = "(() => {\n" + js('pattern.js') + "\n" + js('i18n.js') + "\n" + js('icons.js') + "\n" + js('app.js') + "\n})();"
+bundle = "(() => {\n" + js('pattern.js') + "\n" + js('i18n.js') + "\n" + js('icons.js') + "\n" + js('tips.js') + "\n" + js('app.js') + "\n})();"
 html = re.sub(r'<link rel="stylesheet" href="ds/kds\.css[^"]*">', lambda m: "<style>\n" + ds + "\n</style>", html)
 html = re.sub(r'<link rel="stylesheet" href="style\.css[^"]*">', lambda m: "<style>\n" + css + "\n</style>", html)
 html = re.sub(r'<script type="module" src="js/app\.js[^"]*"></script>', lambda m: "<script>\n" + bundle + "\n</script>", html)

@@ -15,7 +15,7 @@ export const T = {
     position: 'Размер и положение', scale: 'Масштаб', scaleRel: 'От формата', scaleRelS: '%', scaleAbsS: 'px', scaleAbs: 'В пикселях', center: 'В центр', dragHint: 'Двигать паттерн: ЛКМ или СКМ на превью, в 3D — СКМ, Alt + ЛКМ или Пробел + ЛКМ. Колесо — масштаб. Ctrl/⌘ + ЛКМ: влево-вправо — вращение, вверх-вниз — кольца. Ctrl/⌘ + колесо — вращение',
     colors: 'Цвета', ring: 'Кольца', bg: 'Фон', bgOn: 'Заливка фона', gradientOn: 'Градиент на кольцах', angle: 'Угол', opacity: 'Непрозрачность', custom_color: 'Свой',
     addPreset: 'Сохранить текущие настройки как пресет', myPreset: 'Мой пресет', rename: 'Дважды щёлкните, чтобы переименовать', del: 'Удалить', deleted: 'Пресет удалён', undo: 'Вернуть',
-    export: 'Экспорт', download: 'Скачать SVG', copy: 'Скопировать в SVG', share: 'Скопировать ссылку', reset: 'Сбросить всё', resetAll: 'Сбросить все параметры', theme: 'Светлая / тёмная тема (D)', resetDone: 'Все параметры сброшены',
+    export: 'Экспорт', download: 'Скачать SVG', copy: 'Скопировать в SVG', share: 'Скопировать ссылку', reset: 'Сбросить всё', resetAll: 'Сбросить все параметры', theme: 'Светлая / тёмная тема', resetDone: 'Все параметры сброшены',
     copied: 'SVG скопирован. В Figma нажмите Ctrl+V (⌘V)', linkCopied: 'Ссылка скопирована', saved: 'Пресет сохранён', copyFail: 'Не удалось скопировать',
   },
   en: {
@@ -32,7 +32,7 @@ export const T = {
     position: 'Size & position', scale: 'Scale', scaleRel: 'Relative to format', scaleRelS: '%', scaleAbsS: 'px', scaleAbs: 'In pixels', center: 'Centre', dragHint: 'Move the pattern: LMB or MMB on the preview, in 3D — MMB, Alt + LMB or Space + LMB. Wheel — scale. Ctrl/⌘ + LMB: left-right — rotation, up-down — rings. Ctrl/⌘ + wheel — rotation',
     colors: 'Colours', ring: 'Rings', bg: 'Background', bgOn: 'Fill background', gradientOn: 'Gradient on rings', angle: 'Angle', opacity: 'Opacity', custom_color: 'Custom',
     addPreset: 'Save current settings as a preset', myPreset: 'My preset', rename: 'Double-click to rename', del: 'Delete', deleted: 'Preset deleted', undo: 'Undo',
-    export: 'Export', download: 'Download SVG', copy: 'Copy as SVG', share: 'Copy link', reset: 'Reset all', resetAll: 'Reset all parameters', theme: 'Light / dark theme (D)', resetDone: 'All parameters reset',
+    export: 'Export', download: 'Download SVG', copy: 'Copy as SVG', share: 'Copy link', reset: 'Reset all', resetAll: 'Reset all parameters', theme: 'Light / dark theme', resetDone: 'All parameters reset',
     copied: 'SVG copied. Press Ctrl+V (⌘V) in Figma', linkCopied: 'Link copied', saved: 'Preset saved', copyFail: 'Copy failed',
   },
   kk: {
@@ -49,7 +49,7 @@ export const T = {
     position: 'Өлшем және орын', scale: 'Масштаб', scaleRel: 'Форматқа қатысты', scaleRelS: '%', scaleAbsS: 'px', scaleAbs: 'Пиксельмен', center: 'Ортаға', dragHint: 'Паттернді жылжыту: алдын ала көріністе СТБ немесе ОТБ, 3D-де — ОТБ. Дөңгелек — масштаб. Ctrl/⌘ + СТБ: солға-оңға — айналдыру, жоғары-төмен — сақиналар. Ctrl/⌘ + дөңгелек — айналдыру',
     colors: 'Түстер', ring: 'Сақиналар', bg: 'Фон', bgOn: 'Фонды бояу', gradientOn: 'Сақиналарда градиент', angle: 'Бұрыш', opacity: 'Мөлдірсіздік', custom_color: 'Өз түсі',
     addPreset: 'Ағымдағы баптауларды пресет ретінде сақтау', myPreset: 'Менің пресетім', rename: 'Атын өзгерту үшін екі рет басыңыз', del: 'Жою', deleted: 'Пресет жойылды', undo: 'Қайтару',
-    export: 'Экспорт', download: 'SVG жүктеу', copy: 'SVG ретінде көшіру', share: 'Сілтемені көшіру', reset: 'Бәрін қалпына келтіру', resetAll: 'Барлық параметрлерді қалпына келтіру', theme: 'Ашық / қараңғы тақырып (D)', resetDone: 'Барлық параметрлер қалпына келтірілді',
+    export: 'Экспорт', download: 'SVG жүктеу', copy: 'SVG ретінде көшіру', share: 'Сілтемені көшіру', reset: 'Бәрін қалпына келтіру', resetAll: 'Барлық параметрлерді қалпына келтіру', theme: 'Ашық / қараңғы тақырып', resetDone: 'Барлық параметрлер қалпына келтірілді',
     copied: 'SVG көшірілді. Figma-да Ctrl+V (⌘V) басыңыз', linkCopied: 'Сілтеме көшірілді', saved: 'Пресет сақталды', copyFail: 'Көшіру мүмкін болмады',
   },
 };

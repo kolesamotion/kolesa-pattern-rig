@@ -1,6 +1,7 @@
 import { DEFAULTS, VARIANTS, LIMITS, buildSVG, buildGhostSVG, scaleFactor } from './pattern.js?v=__V__';
 import { T, LANGS } from './i18n.js?v=__V__';
 import { ICONS } from './icons.js?v=__V__';
+import { setupTips, fmtKeys } from './tips.js?v=__V__';
 
 const $ = (id) => document.getElementById(id);
 
@@ -94,6 +95,12 @@ function makeSlider(parent, key, labelKey) {
     linkThickness(key); update();
   };
   range.addEventListener('input', () => onInput(range.value));
+  // Keys: arrows = step (native), Shift+arrows and PageUp / PageDown = large step (as Shift+wheel), Home / End = ends.
+  range.addEventListener('keydown', (e) => {
+    const d = { ArrowRight: 1, ArrowUp: 1, PageUp: 1, ArrowLeft: -1, ArrowDown: -1, PageDown: -1 }[e.key];
+    if (!d || !(e.shiftKey || e.key.startsWith('Page'))) return;
+    e.preventDefault(); nudge(range, d, true);
+  });
   num.addEventListener('change', () => { onInput(num.value); num.value = +(+state[key]).toFixed(2); placeUnit(num); });   // show the clamped value
   // The value field must not start a text selection when a drag begins on it: block the native press while it is
   // not being edited; a plain click (no movement) opens it for typing with the whole value selected.
@@ -116,7 +123,7 @@ function swatches(parent, colors, key, cls = '') {
   parent.innerHTML = '';
   for (const c of colors) {
     const b = document.createElement('button');
-    b.className = 'sw ' + cls; b.style.background = c; b.title = swTitle(c); b.setAttribute('aria-label', swTitle(c)); b.dataset.c = c;
+    b.className = 'sw ' + cls; b.style.background = c; b.dataset.tip = swTitle(c); b.setAttribute('aria-label', swTitle(c)); b.dataset.c = c;
     b.addEventListener('click', () => { state[key] = c; update(); });
     parent.appendChild(b);
   }
@@ -197,6 +204,7 @@ function buildUI() {
       if (v >= 16 && v <= 20000) { state[k] = v; syncFormat(); update(); }
     });
     $(k).addEventListener('change', (e) => { state[k] = +e.target.value || state[k]; clampAll(state); update(); });
+    scrubLabel(document.querySelector(`label[for=${k}]`), $(k), 10);
   }
 
   for (const k of ['rings', 'r0', 'step', 'thickness']) makeSlider($('geomSliders'), k, k);
@@ -235,7 +243,7 @@ function buildUI() {
   GRADS.forEach((g) => {
     const b = document.createElement('button');
     b.className = 'sw'; b.style.background = `linear-gradient(${g.a + 90}deg, ${g.c.join(',')})`;
-    b.title = g.c.map((c) => DS_NAMES[c] ? DS_NAMES[c].split(' · ').pop() : c).join(' → '); b.setAttribute('aria-label', b.title);
+    b.dataset.tip = g.c.map((c) => DS_NAMES[c] ? DS_NAMES[c].split(' · ').pop() : c).join(' → '); b.setAttribute('aria-label', b.dataset.tip);
     b.addEventListener('click', () => { state.grad = [...g.c]; state.gradAngle = g.a; state.gradient = true; update(); });
     gs.appendChild(b);
   });
@@ -252,9 +260,54 @@ function buildUI() {
     update(); toast(t('resetDone'));
   });
 
+  setupTips();
+  // segmented thumbs follow their active option's real width (labels may differ; fonts load late)
+  const ro = new ResizeObserver((es) => es.forEach((e) => measureSeg(e.target)));
+  document.querySelectorAll('.segAnim').forEach((el) => ro.observe(el));
   setupDrag();
   setupResizer();
   new ResizeObserver(fitFrame).observe($('stage'));
+}
+
+// Segmented control thumb: measured from the active option (Kolesa Design SegmentedControl), so options may differ
+// in width. The transition starts after the first measure, so the thumb doesn't fly in on load.
+function measureSeg(el) {
+  const b = el.querySelector('.kds-tabs__trigger.is-active');
+  if (!b || !b.offsetWidth) return;
+  el.style.setProperty('--seg-x', b.offsetLeft + 'px'); el.style.setProperty('--seg-w', b.offsetWidth + 'px');
+  if (!el.classList.contains('is-measured')) requestAnimationFrame(() => el.classList.add('is-measured'));
+}
+
+// Number field label = scrub handle (Kolesa Design NumberField): drag left / right to change the value,
+// `step` per `pps` px; Shift ×10, Alt ×0.1. A click without movement focuses the field with the value selected.
+function scrubLabel(label, inp, step, pps = 2) {
+  if (!label) return;
+  label.classList.add('scrubLabel');
+  let dragged = false;
+  label.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0 || inp.disabled) return;
+    e.preventDefault();
+    const x0 = e.clientX, v0 = +inp.value, min = +inp.min || -Infinity, max = inp.max === '' ? Infinity : +inp.max;
+    let acc = 0, last = x0; dragged = false;
+    label.setPointerCapture(e.pointerId); document.body.classList.add('scrubbing');
+    const move = (m) => {
+      const mul = m.shiftKey ? 10 : m.altKey ? 0.1 : 1;
+      acc += (m.clientX - last) / pps * mul; last = m.clientX;
+      if (Math.abs(m.clientX - x0) > 2) dragged = true;
+      if (!dragged) return;
+      const q = m.altKey ? step / 10 : step;
+      const v = Math.min(max, Math.max(min, Math.round((v0 + acc * step) / q) * q));
+      if (v !== +inp.value) { inp.value = v; inp.dispatchEvent(new Event('input', { bubbles: true })); }
+    };
+    const up = () => {
+      label.removeEventListener('pointermove', move); label.removeEventListener('pointerup', up); label.removeEventListener('pointercancel', up);
+      document.body.classList.remove('scrubbing');
+      if (dragged) inp.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+    label.addEventListener('pointermove', move); label.addEventListener('pointerup', up); label.addEventListener('pointercancel', up);
+  });
+  // the label's own click focuses the field: keep it for a plain click (and select the value), drop it after a drag
+  label.addEventListener('click', (e) => { if (dragged) { e.preventDefault(); dragged = false; return; } setTimeout(() => inp.select()); });
 }
 
 // Design system: light / dark via data-theme on <html>; key D toggles (as in Kolesa services).
@@ -276,10 +329,10 @@ function switchScaleMode(mode) {
 function applyLang() {
   document.documentElement.lang = lang === 'kk' ? 'kk' : lang;
   document.querySelectorAll('[data-t]').forEach((el) => { el.textContent = t(el.dataset.t); });
-  document.querySelectorAll('[data-t-aria]').forEach((el) => { el.setAttribute('aria-label', t(el.dataset.tAria)); el.title = t(el.dataset.tAria); });
-  const mod = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl';
-  const alt = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌥' : 'Alt';
-  $('copyHint').innerHTML = `<kbd>${mod} + C</kbd> ${t('k_copyAny')}`;
+  // aria-label + tooltip (not the browser title); groups (2D / 3D) keep only the label
+  document.querySelectorAll('[data-t-aria]').forEach((el) => { el.setAttribute('aria-label', t(el.dataset.tAria)); if (el.getAttribute('role') !== 'group') el.dataset.tip = t(el.dataset.tAria); });
+  const mod = fmtKeys('mod'), alt = fmtKeys('alt');
+  $('copyHint').innerHTML = `<kbd>${fmtKeys('mod+C')}</kbd> ${t('k_copyAny')}`;
   document.title = t('title');
   $('langs').value = lang;
   // Shortcut lists live in the "?" tooltips next to the Camera and Size & position titles.
@@ -350,12 +403,13 @@ function render() {
   $('viewMode').classList.toggle('is-second', !!s.threeD);
   $('scaleMode').classList.toggle('is-second', s.scaleMode === 'abs');
   $('viewMode').querySelectorAll('button').forEach((b) => b.classList.toggle('is-active', (b.dataset.v === '1') === !!s.threeD));
+  $('scaleMode').querySelectorAll('button').forEach((b) => b.classList.toggle('is-active', b.dataset.v === s.scaleMode));
+  document.querySelectorAll('.segAnim').forEach(measureSeg);
   $('tsRatioText').textContent = s.linkTS ? `${Math.round(s.tsRatio * 100)} %` : '';
   $('shiftOn').checked = shiftTarget != null ? shiftTarget === 1 : s.shift > 0;
   syncFormat();
   $('variants').querySelectorAll('.presetCard').forEach((b) => b.classList.toggle('is-active', b.dataset.v === s.variant));
   renderThumbs();
-  $('scaleMode').querySelectorAll('button').forEach((b) => b.classList.toggle('is-active', b.dataset.v === s.scaleMode));
   $('ringSw').querySelectorAll('.sw').forEach((b) => b.classList.toggle('on', b.dataset.c === s.ringColor.toUpperCase()));
   $('bgSw').querySelectorAll('.sw').forEach((b) => b.classList.toggle('on', b.dataset.c === s.bgColor.toUpperCase()));
   $('ringColor').value = s.ringColor; $('bgColor').value = s.bgColor;
@@ -767,8 +821,8 @@ function renderUserPresets() {
     const b = document.createElement('div');
     b.className = 'presetCard user'; b.dataset.v = 'u:' + p.id; b.tabIndex = 0; b.setAttribute('role', 'button');
     b.innerHTML = `<span class="thumb"></span><span class="name"></span><button class="del" type="button"></button>`;
-    b.querySelector('.name').textContent = p.name; b.querySelector('.name').title = t('rename');
-    const del = b.querySelector('.del'); del.innerHTML = ICONS.close; del.setAttribute('aria-label', t('del')); del.title = t('del');
+    b.querySelector('.name').textContent = p.name; b.querySelector('.name').dataset.tip = t('rename');
+    const del = b.querySelector('.del'); del.innerHTML = ICONS.close; del.setAttribute('aria-label', t('del')); del.dataset.tip = t('del');
     const apply = () => { const { width, height } = state; state = Object.assign(fromQuery(p.q), { variant: 'u:' + p.id, width, height }); update(); };
     b.addEventListener('click', (e) => { if (!e.target.closest('.del, .nameEdit')) apply(); });
     b.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === b) { e.preventDefault(); apply(); } });
