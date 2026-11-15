@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kolesa Pattern</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2264%22 height=%2264%22 viewBox=%22-104 -104 208 208%22 fill=%22none%22%3E%3Cpath d=%22M-47 0A47 47 0 0 0 47 0Z%22 fill=%22%23005EFF%22/%3E%3Cpath d=%22M-60 0A60 60 0 0 1 60 0 M-87.5 0A87.5 87.5 0 0 0 87.5 0%22 stroke=%22%23005EFF%22 stroke-width=%2229%22 fill=%22none%22/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400..900&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="perimeter.css?v=__V__">
+</head>
+<body>
+<!-- Perimeter interface: no side panel. The canvas is the whole window; every parameter sits on the edge it belongs to.
+     top — what we make (presets, format) · left — the pattern itself (ring structure, gap, colour)
+     right — how we look at it and where it goes (view, gizmo, export) · bottom — draw progress (a timeline lives at the bottom). -->
+<main class="stage" id="stage">
+  <div class="ghost" id="ghost" aria-hidden="true"></div>
+  <div class="frame" id="frame"></div>
+</main>
+
+<!-- All edge controls live in one layer that scales down as a whole in a small window (js: --k). -->
+<div class="uiLayer" id="ui">
+<header class="top ui" id="top">
+  <div class="brand">
+    <svg class="mark" viewBox="-104 -104 208 208" aria-hidden="true"><path d="M-47 0A47 47 0 0 0 47 0Z" fill="currentColor"/><path d="M-60 0A60 60 0 0 1 60 0M-87.5 0A87.5 87.5 0 0 0 87.5 0" stroke="currentColor" stroke-width="29" fill="none"/></svg>
+    <span class="brandName" data-x="p_title"></span>
+  </div>
+  <div class="isle presetsIsle">
+    <div class="presets" id="variants"></div>
+    <button class="ibtn" type="button" id="addPreset" data-x-tip="addPreset"><i data-icon="add-plus"></i></button>
+  </div>
+  <div class="isle tools">
+    <button class="ibtn" type="button" id="undoBtn" data-x-tip="undo" data-kbd="mod+Z"><i data-icon="undo"></i></button>
+    <button class="ibtn" type="button" id="redoBtn" data-x-tip="redo" data-kbd="shift+mod+Z"><i data-icon="redo"></i></button>
+    <span class="vsep"></span>
+    <button class="ibtn" type="button" id="resetTop" data-x-tip="resetAll"><i data-icon="update"></i></button>
+    <button class="ibtn" type="button" id="cheatsBtn" data-x-tip="shortcuts" data-kbd="?"><i data-icon="keys"></i></button>
+    <select class="langSel" id="langs" aria-label="Language"></select>
+    <button class="ibtn" type="button" id="themeBtn" data-x-tip="theme" data-kbd="D"><i data-icon="sun"></i></button>
+  </div>
+</header>
+
+<!-- Format hugs the top edge of the canvas, like a dimension line. -->
+<div class="isle formatBar ui" id="formatBar">
+  <div class="ratios" id="ratios" role="group" data-x-aria="ratio"></div>
+  <span class="ratioText" id="ratioText"></span>
+  <span class="vsep"></span>
+  <label class="dim"><span class="dimL" id="wL" data-x="wS"></span><input class="dimIn" type="number" id="width" min="16" max="20000" data-x-aria="width"></label>
+  <button class="ibtn sm" type="button" id="swapWH" data-x-tip="swapWH"><i data-icon="swap"></i></button>
+  <label class="dim"><span class="dimL" id="hL" data-x="hS"></span><input class="dimIn" type="number" id="height" min="16" max="20000" data-x-aria="height"></label>
+</div>
+
+<!-- Left: the pattern itself. The arcs grow from 9 o'clock, i.e. from this side. -->
+<aside class="col colL ui" id="colL">
+  <section class="isle">
+    <div class="isleHead"><h2 data-x="g_rings"></h2>
+      <button class="ibtn sm" type="button" id="resetGeom" data-x-tip="resetGeomTip"><i data-icon="update"></i></button></div>
+    <div class="rows" id="ringDials"></div>
+  </section>
+  <section class="isle">
+    <div class="isleHead"><h2 data-x="g_gap"></h2></div>
+    <div class="rows" id="gapDials"></div>
+  </section>
+</aside>
+
+<section class="isle corner cornerL ui" id="colorIsle">
+  <div class="isleHead"><h2 data-x="colors"></h2>
+    <button class="ibtn sm" type="button" id="swapColors" data-x-tip="swapColors" data-kbd="shift+Q"><i data-icon="swap"></i></button></div>
+  <div class="rows">
+    <button class="chip" type="button" id="ringChip"><kbd class="cap">Q</kbd><span class="chipSw"><i></i></span><span class="chipName" data-x="ring"></span><span class="chipVal" id="ringVal"></span></button>
+    <div class="chipRow">
+      <button class="chip" type="button" id="bgChip"><kbd class="cap">B</kbd><span class="chipSw"><i></i></span><span class="chipName" data-x="bg"></span><span class="chipVal" id="bgVal"></span></button>
+      <button class="ibtn eye" type="button" id="bgEye" data-x-tip="bgOn" data-kbd="shift+B"><i data-icon="eye"></i></button>
+    </div>
+    <label class="tog" data-x-tip="gradientOn"><kbd class="cap">G</kbd><span class="togName" data-x="gradTab"></span><input type="checkbox" role="switch" class="switch" id="swGradient"></label>
+  </div>
+</section>
+
+<!-- Right: how we look at it. -->
+<aside class="col colR ui" id="colR">
+  <section class="isle" id="viewIsle">
+    <div class="isleHead"><h2 data-x="g_view"></h2>
+      <button class="ibtn sm" type="button" id="resetCam" data-x-tip="resetCam" data-kbd="shift+H"><i data-icon="rotate"></i></button></div>
+    <div class="rows">
+      <div class="seg" id="viewMode" role="group" data-x-aria="viewMode">
+        <kbd class="cap">V</kbd>
+        <button type="button" data-v="0">2D</button>
+        <button type="button" data-v="1">3D</button>
+      </div>
+      <div class="gizmoWrap"><svg id="gizmo" viewBox="-54 -54 108 108" role="img" tabindex="0"></svg></div>
+      <div class="scaleRow"><div id="scaleDial"></div>
+        <div class="seg mini" id="scaleMode" role="group">
+          <button type="button" data-v="rel" data-x="scaleRelS" data-x-tip="scaleRel"></button>
+          <button type="button" data-v="abs" data-x="scaleAbsS" data-x-tip="scaleAbs"></button>
+        </div></div>
+      <div class="rows" id="rotDials"></div>
+      <button class="rowBtn" type="button" id="centerBtn"><kbd class="cap">H</kbd><span data-x="center"></span></button>
+    </div>
+  </section>
+</aside>
+
+<section class="isle corner cornerR ui" id="exportIsle">
+  <button class="btnPrimary" type="button" id="copyBtn"><i data-icon="copy"></i><span data-x="copyS"></span><kbd data-k="mod+C"></kbd></button>
+  <div class="btnPair">
+    <button class="rowBtn" type="button" id="downloadBtn" data-x-tip="download" data-kbd="mod+S"><i data-icon="download"></i><span>SVG</span></button>
+    <button class="rowBtn" type="button" id="shareBtn" data-x-tip="share"><i data-icon="link"></i><span data-x="linkS"></span></button>
+  </div>
+</section>
+
+<!-- Bottom: how much of the pattern is drawn. -->
+<div class="isle strip ui" id="drawStrip"></div>
+
+<div class="picker isle" id="picker" hidden></div>
+</div>
+
+<div class="hud" id="hud" aria-live="polite"></div>
+<div class="cheats" id="cheats" hidden><div class="cheatsBox" id="cheatsBox" role="dialog" aria-modal="true"></div></div>
+<div class="toast" id="toast" role="status"></div>
+<script type="module" src="js/perimeter.js?v=__V__"></script>
+</body>
+</html>
